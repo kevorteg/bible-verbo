@@ -1,0 +1,8 @@
+
+{
+  "name": "VerboBible",
+  "description": "An AI-powered Bible reader and spiritual companion designed for Misión Juvenil (MJ), featuring standard text reading, AI chat assistance, and multimedia generation.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
