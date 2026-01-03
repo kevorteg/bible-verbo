@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Verbo Bible 📖✨
 
-# Run and deploy your AI Studio app
+**Verbo Bible** es una plataforma web moderna diseñada para transformar el estudio bíblico mediante Inteligencia Artificial. No es solo un lector, es un compañero de discipulado inteligente que combina tecnología y espiritualidad.
 
-This contains everything you need to run your app locally.
+## 🚀 Características Principales
 
-View your app in AI Studio: https://ai.studio/apps/drive/1Boo8-IFz3nKwzm12scOJm_8Ceo0FbO7X
+*   **📖 Lector Bíblico Avanzado**: Interfaz limpia y rápida (Reina Valera 1909), con navegación fluida y modo oscuro/sepia.
+*   **🤖 "Verbo" (Tu Mentor IA)**: Un asistente teológico basado en Google Gemini que responde dudas, analiza pasajes y te acompaña, siempre con un enfoque doctrinal sano.
+*   **🧠 Trivia Bíblica (Quiz)**:
+    *   Generación automática de preguntas sobre el capítulo que estás leyendo.
+    *   Niveles: Explorador, Discípulo y Maestro.
+    *   Temáticas: Historia, Teología y Aplicación Práctica.
+    *   Repaso de errores educativo.
+*   **🔊 Biblia en Audio Inteligente**: Escucha cualquier versículo o explicación de la IA con voces naturales (TTS).
+*   **🎨 Arte Bíblico Generativo**: Crea imágenes artísticas basadas en versículos automáticamente.
+*   **📍 Localizador de Iglesias**: Encuentra congregaciones IPUC cercanas integradas con Google Maps.
 
-## Run Locally
+## 🛠️ Tecnologías
 
-**Prerequisites:**  Node.js
+Este proyecto está construido con lo último en desarrollo web:
+*   **Frontend**: React + TypeScript + Vite
+*   **Estilos**: Tailwind CSS
+*   **Inteligencia Artificial**: Google Gemini 1.5 Flash (Multimodal)
+*   **Datos Bíblicos**: API.Bible
+*   **Iconos**: Lucide React
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+---
+*Desarrollado con ❤️ para la edificación del cuerpo de Cristo.*
