@@ -55,7 +55,8 @@ export interface User {
   email: string;
   avatar?: string; // Base64 string
   joinedDate: string;
-  role?: 'user' | 'admin'; // NUEVO: Rol para moderación
+  role?: 'user' | 'admin' | 'leader'; // NUEVO: Rol para moderación
+  isVerified?: boolean; // NUEVO: Estado de verificación
   location?: { lat: number; lng: number };
   stats?: {
     chaptersRead: number;

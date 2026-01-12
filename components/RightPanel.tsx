@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
   X, Quote, ImageIcon, Copy, Volume2, StickyNote, Book,
-  BookMarked, Trash2, Send, Loader2, Microscope, PenTool, HeartHandshake, MessageCircle, Sunrise, Share2, BrainCircuit, Trophy, RefreshCcw, Save, Check, MapPin, Navigation, Map as MapIcon
+  BookMarked, Trash2, Send, Loader2, Microscope, PenTool, HeartHandshake, MessageCircle, Sunrise, Share2, BrainCircuit, Trophy, RefreshCcw, Save, Check, MapPin, Navigation, Map as MapIcon, Users
 } from 'lucide-react';
 import { ChatMessage, Verse, Bookmark, NoteMap, Book as IBook, Chapter, QuizQuestion, ChurchLocation } from '../types';
 
@@ -470,6 +470,31 @@ const RightPanel: React.FC<RightPanelProps> = ({
                     >
                       {saveStatus === 'saved' ? <><Check size={14} /> Guardado</> : <><Save size={14} /> Guardar</>}
                     </button>
+                  </div>
+
+                  {/* List of Notes within current chapter context */}
+                  <div className="mt-6 pt-6 border-t border-neutral-200 dark:border-white/10">
+                    <p className="text-[10px] font-black uppercase opacity-50 mb-3">Notas en este capítulo</p>
+                    <div className="space-y-2">
+                      {Object.entries(notes)
+                        .filter(([k]) => k.startsWith(`${currentBook?.id}-${currentChapter?.number}`))
+                        .map(([k, content]) => {
+                          const isGen = k.includes('GENERAL');
+                          const verseNum = k.split(':').pop();
+                          return (
+                            <div key={k} className={`p-3 rounded-lg border text-xs ${k === currentNoteId ? 'border-orange-500 bg-orange-500/5' : 'border-transparent bg-neutral-100 dark:bg-white/5 opacity-60'}`}>
+                              <div className="font-bold flex justify-between">
+                                <span>{isGen ? 'General' : `Versículo ${verseNum}`}</span>
+                                {k === currentNoteId && <span className="text-[9px] text-orange-500 uppercase">Editando</span>}
+                              </div>
+                              <p className="line-clamp-1 opacity-70 mt-1">{content}</p>
+                            </div>
+                          );
+                        })}
+                      {Object.entries(notes).filter(([k]) => k.startsWith(`${currentBook?.id}-${currentChapter?.number}`)).length === 0 && (
+                        <p className="text-[10px] italic opacity-40">No hay otras notas en este capítulo.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

@@ -1,7 +1,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Menu, MessageCircle, Loader2, ChevronLeft, ChevronRight, Bookmark, ArrowLeft, Grid, ChevronDown, Type, Minus, Plus, Sun, Moon, Coffee, Check, CheckCircle2 } from 'lucide-react';
+import { Menu, MessageCircle, Loader2, ChevronLeft, ChevronRight, Bookmark, ArrowLeft, Grid, ChevronDown, Type, Minus, Plus, Sun, Moon, Coffee, Check, CheckCircle2, BrainCircuit, Headphones, Play, Pause, X, Mic2, Zap, ScrollText, Feather, BookOpen, Quote, Download } from 'lucide-react';
 import { Book, Chapter, Verse, Theme, Bookmark as BookmarkType, ReadProgressMap } from '../types';
+import { generatePodcastEpisode } from '../services/aiFeatures';
 
 interface ReaderProps {
   currentBook: Book | null;
@@ -34,6 +35,7 @@ interface ReaderProps {
   // New props for tracker
   readChapters: ReadProgressMap;
   onToggleReadChapter: (bookId: string, chapterNum: string) => void;
+  onStartQuiz: () => void;
 }
 
 // Lista de fuentes disponibles con sus valores CSS
@@ -55,12 +57,171 @@ const Reader: React.FC<ReaderProps> = ({
   showChapterGrid, setShowChapterGrid,
   sidebarOpen, setSidebarOpen, rightPanelOpen, setRightPanelOpen,
   selectedVerse, setSelectedVerse, bookmarks, onToggleBookmark, highlightedVerseId,
-  onClearHighlight, readChapters, onToggleReadChapter
+  onClearHighlight, readChapters, onToggleReadChapter, onStartQuiz
 }) => {
   const verseRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isAutoScrolling = useRef(false);
   const [showAppearanceMenu, setShowAppearanceMenu] = useState(false);
+  // --- PODCAST STATE ---
+  const [podcastUrl, setPodcastUrl] = useState<string | null>(null);
+  const [podcastBlob, setPodcastBlob] = useState<Blob | null>(null);
+  const [isPlayingPodcast, setIsPlayingPodcast] = useState(false);
+  const [generatingPodcast, setGeneratingPodcast] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+
+  // Estados para el modal de personalización del Podcast
+  const [showPodcastModal, setShowPodcastModal] = useState(false);
+  const [podcastTone, setPodcastTone] = useState<'fun' | 'deep' | 'meditative'>('fun');
+  const [podcastScope, setPodcastScope] = useState<'chapter' | 'selection'>('chapter');
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Lógica principal de generación del Podcast
+  // 1. Recibe el texto (capítulo completo o selección).
+  // 2. Llama al servicio de IA (aiFeatures.ts) pasando el texto y el tono.
+  // 3. Recibe el buffer de audio y lo reproduce.
+  const handleGeneratePodcast = async () => {
+    if (!currentBook || !currentChapter) return;
+    setShowPodcastModal(false); // Cerramos el modal
+    setGeneratingPodcast(true);
+
+    // Decidimos qué texto enviar: ¿Todo el capítulo o solo lo seleccionado?
+    let textToProcess = "";
+    let title = "";
+
+    if (podcastScope === 'selection' && selectedVerse) {
+      textToProcess = selectedVerse.text;
+      title = `${currentBook.name} ${currentChapter.number}:${selectedVerse.number}`;
+    } else {
+      // Por defecto: Capítulo completo
+      textToProcess = verses.map(v => v.text).join(" ");
+      title = `${currentBook.name} ${currentChapter.number}`;
+    }
+
+    try {
+      // AQUÍ ESTÁ LA MAGIA: Llamamos a la función que orquesta a Gemini (Guionista + Locutores)
+      // Puedes ver esta función en: services/aiFeatures.ts
+      const result = await generatePodcastEpisode(textToProcess, title, podcastTone);
+
+      if (result) {
+        const audioUrl = URL.createObjectURL(result.blob);
+        setPodcastUrl(audioUrl);
+        setPodcastBlob(result.blob);
+        // Play automatically
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play();
+            setIsPlayingPodcast(true);
+          }
+        }, 100);
+      } else {
+        // Manejo de error si no devolvió audio
+        console.error("No se generó audio");
+      }
+    } catch (error) {
+      console.error("Error en podcast:", error);
+    } finally {
+      setGeneratingPodcast(false);
+    }
+  };
+
+  const downloadPodcast = () => {
+    if (!podcastBlob || !currentBook || !currentChapter) return;
+    const url = URL.createObjectURL(podcastBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `VerboCast_${currentBook.name}_${currentChapter.number}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const openPodcastModal = () => {
+    // Si hay un versículo seleccionado, damos la opción de elegir scope. Si no, forzamos capítulo.
+    if (selectedVerse) {
+      setPodcastScope('selection');
+    } else {
+      setPodcastScope('chapter');
+    }
+    setShowPodcastModal(true);
+  };
+
+  // --- OLD AUDIO CONTEXT LOGIC REMOVED ---
+  // --- NEW HTML AUDIO ELEMENT LOGIC ---
+
+  const togglePodcastPlayback = () => {
+    if (audioRef.current) {
+      if (isPlayingPodcast) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlayingPodcast(!isPlayingPodcast);
+    }
+  };
+
+  const closePodcast = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPodcastUrl(null);
+    setPodcastBlob(null);
+    setIsPlayingPodcast(false);
+    setCurrentTime(0);
+    setDuration(0);
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  const skipForward = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.min(audioRef.current.currentTime + 10, duration);
+    }
+  };
+
+  const skipBackward = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = Math.max(audioRef.current.currentTime - 10, 0);
+    }
+  };
+
+  const toggleSpeed = () => {
+    const newRate = playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1;
+    setPlaybackRate(newRate);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = newRate;
+    }
+  };
 
   // Helper to check if chapter is read
   const isChapterRead = (bookId: string | undefined, chapNum: string) => {
@@ -219,9 +380,132 @@ const Reader: React.FC<ReaderProps> = ({
             )}
           </div>
 
+          <div className="relative">
+            <button
+              onClick={openPodcastModal}
+              disabled={generatingPodcast}
+              className={`p-2.5 rounded-full transition-all ${generatingPodcast ? 'animate-pulse text-orange-500 bg-orange-100' : 'hover:bg-blue-800/20 text-orange-500'}`}
+              title="Crear Podcast VerboCast"
+            >
+              {generatingPodcast ? <Loader2 size={20} className="animate-spin" /> : <Headphones size={20} />}
+            </button>
+          </div>
+
+          {/* --- MODAL DE PERSONALIZACIÓN DE PODCAST (Rediseñado - Premium) --- */}
+          {/* --- MODAL DE PERSONALIZACIÓN DE PODCAST (Pixel Perfect v4) --- */}
+          {showPodcastModal && (
+            <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 sm:pt-32 px-4 animate-in fade-in duration-200" style={{ margin: 0 }}>
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-transparent"
+                onClick={() => setShowPodcastModal(false)}
+              ></div>
+
+              {/* Modal Card */}
+              <div
+                className={`w-full max-w-[320px] relative z-20 rounded-2xl shadow-2xl animate-in zoom-in-95 slide-in-from-top-2 duration-200 flex flex-col overflow-hidden ring-1 ring-white/10 ${theme === 'dark' ? 'bg-[#0f172a] text-white' : 'bg-[#0f172a] text-white'}`}
+                onClick={e => e.stopPropagation()}
+              >
+
+                {/* Header */}
+                <div className="px-5 pt-5 pb-2 shrink-0 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mic2 size={16} className="text-white" />
+                    <span className="font-black text-sm uppercase tracking-widest text-white">VERBOCAST</span>
+                  </div>
+                  <button
+                    onClick={() => setShowPodcastModal(false)}
+                    className="opacity-50 hover:opacity-100 transition-opacity"
+                  >
+                    <X size={18} className="text-white" />
+                  </button>
+                </div>
+
+                <div className="w-full h-px bg-white/10 mx-auto mb-4 scale-x-90"></div>
+
+                {/* Content */}
+                <div className="px-5 pb-6 space-y-5">
+
+                  {/* ORIGEN */}
+                  <section>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">ORIGEN</label>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setPodcastScope('chapter')}
+                        className={`flex-1 py-1.5 px-3 rounded-full border text-xs font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${podcastScope === 'chapter'
+                          ? 'bg-orange-600 border-orange-600 text-white'
+                          : 'bg-transparent border-slate-600 text-slate-400 hover:border-slate-400'}`}
+                      >
+                        <BookOpen size={12} /> CAP.
+                      </button>
+
+                      <button
+                        onClick={() => setPodcastScope('selection')}
+                        disabled={!selectedVerse}
+                        className={`flex-1 py-1.5 px-3 rounded-full border text-xs font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${podcastScope === 'selection' && selectedVerse
+                          ? 'bg-orange-600 border-orange-600 text-white'
+                          : 'bg-transparent border-slate-600 text-slate-400 hover:border-slate-400'} ${!selectedVerse ? 'opacity-30 cursor-not-allowed' : ''}`}
+                      >
+                        <Quote size={12} /> VERSO
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* ESTILO */}
+                  <section>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">ESTILO</label>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => setPodcastTone('fun')}
+                        className={`w-full p-3 rounded-xl border text-left flex items-center gap-3 transition-all group ${podcastTone === 'fun'
+                          ? 'border-white/20 bg-white/5 text-white ring-1 ring-white/20'
+                          : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5'}`}
+                      >
+                        <Zap size={16} className={podcastTone === 'fun' ? 'text-blue-400' : 'opacity-50'} />
+                        <span className="text-sm font-bold">Divertido (MJ)</span>
+                      </button>
+
+                      <button
+                        onClick={() => setPodcastTone('deep')}
+                        className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all group ${podcastTone === 'deep'
+                          ? 'border-white/20 bg-white/5 text-white ring-1 ring-white/20'
+                          : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5'}`}
+                      >
+                        <ScrollText size={16} className={podcastTone === 'deep' ? 'text-purple-400' : 'opacity-50'} />
+                        <span className="text-sm font-bold">Teológico</span>
+                      </button>
+
+                      <button
+                        onClick={() => setPodcastTone('meditative')}
+                        className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-all group ${podcastTone === 'meditative'
+                          ? 'border-white/20 bg-white/5 text-white ring-1 ring-white/20'
+                          : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5'}`}
+                      >
+                        <Feather size={16} className={podcastTone === 'meditative' ? 'text-green-400' : 'opacity-50'} />
+                        <span className="text-sm font-bold">Meditativo</span>
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* GENERATE BUTTON */}
+                  <button
+                    onClick={handleGeneratePodcast}
+                    className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-xl shadow-lg shadow-orange-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs mt-2"
+                  >
+                    <Headphones size={16} />
+                    <span>PRODUCIR EPISODIO</span>
+                  </button>
+
+                </div>
+              </div>
+            </div>
+          )}
+
+
+
           <button onClick={() => setRightPanelOpen(!rightPanelOpen)} className={`p-2.5 rounded-full transition-all ${rightPanelOpen ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-blue-800/20 text-orange-500'}`}><MessageCircle size={20} /></button>
-        </div>
-      </header>
+        </div >
+      </header >
 
       <div
         ref={scrollContainerRef}
@@ -287,15 +571,24 @@ const Reader: React.FC<ReaderProps> = ({
             {/* TRACKER BUTTON */}
             {!loading && verses.length > 0 && (
               <div className="flex flex-col gap-6 border-t pt-8 pb-48 border-orange-500/20">
-                <button
-                  onClick={() => currentBook && currentChapter && onToggleReadChapter(currentBook.id, currentChapter.number)}
-                  className={`w-full py-4 rounded-2xl font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${currentIsRead
-                    ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
-                    : 'bg-orange-600/10 text-orange-600 border border-orange-600/20 hover:bg-orange-600 hover:text-white'
-                    }`}
-                >
-                  {currentIsRead ? <><CheckCircle2 size={20} /> Capítulo Leído</> : <><Check size={20} /> Marcar como Leído</>}
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => currentBook && currentChapter && onToggleReadChapter(currentBook.id, currentChapter.number)}
+                    className={`flex-1 py-4 rounded-2xl font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${currentIsRead
+                      ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
+                      : 'bg-orange-600/10 text-orange-600 border border-orange-600/20 hover:bg-orange-600 hover:text-white'
+                      }`}
+                  >
+                    {currentIsRead ? <><CheckCircle2 size={20} /> Capítulo Leído</> : <><Check size={20} /> Marcar como Leído</>}
+                  </button>
+
+                  <button
+                    onClick={onStartQuiz}
+                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                  >
+                    <BrainCircuit size={20} strokeWidth={2.5} /> Reflexionar
+                  </button>
+                </div>
 
                 <div className={`flex items-center justify-between`}>
                   <button onClick={onPrevChapter} className="flex flex-col items-start p-4 rounded-2xl hover:bg-blue-900/20 group max-w-[45%]">
@@ -317,7 +610,88 @@ const Reader: React.FC<ReaderProps> = ({
           </div>
         )}
       </div>
-    </main>
+
+      {
+        podcastUrl && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 z-50 animate-in slide-in-from-bottom-6">
+            <div className={`rounded-3xl shadow-2xl p-5 flex flex-col gap-4 border border-white/10 relative overflow-hidden backdrop-blur-md ${theme === 'dark' ? 'bg-[#0b1625]/90 text-white shadow-black/50' : 'bg-white/95 text-neutral-900 shadow-neutral-200/50'}`}>
+
+              <audio
+                ref={audioRef}
+                src={podcastUrl}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={() => setIsPlayingPodcast(false)}
+                className="hidden"
+              />
+
+              {/* Top Row: Info & Close */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${isPlayingPodcast ? 'bg-orange-500 text-white animate-pulse' : 'bg-neutral-200 dark:bg-white/10 text-neutral-500'}`}>
+                    <Headphones size={24} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase text-orange-500 tracking-widest mb-0.5">VerboCast</p>
+                    <p className="text-sm font-bold truncate leading-tight">{currentBook?.name} {currentChapter?.number}</p>
+                  </div>
+                </div>
+                <button onClick={closePodcast} className="p-2 opacity-50 hover:opacity-100 hover:text-red-500 transition-colors -mr-2 -mt-2">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Seek Bar */}
+              <div className="w-full relative py-2">
+                <input
+                  type="range"
+                  min="0"
+                  max={duration || 0}
+                  value={currentTime}
+                  onChange={handleSeek}
+                  className="w-full h-1.5 bg-neutral-200 dark:bg-white/20 rounded-lg appearance-none cursor-pointer accent-orange-500 hover:accent-orange-400 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-orange-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md transition-all"
+                />
+                <div className="flex justify-between text-[10px] font-bold opacity-40 mt-1 tabular-nums tracking-wider">
+                  <span>{formatTime(currentTime)}</span>
+                  <span>{formatTime(duration)}</span>
+                </div>
+              </div>
+
+              {/* Controls Row */}
+              <div className="flex items-center justify-between">
+                <button onClick={toggleSpeed} className="w-10 text-[10px] font-black opacity-50 hover:opacity-100 transition-opacity uppercase tracking-widest">{playbackRate}x</button>
+
+                <div className="flex items-center gap-4">
+                  <button onClick={skipBackward} className="p-2 opacity-60 hover:opacity-100 hover:bg-white/10 rounded-full transition-all" title="-10s">
+                    <div className="transform rotate-180"><ArrowLeft size={20} /></div>
+                  </button>
+
+                  <button
+                    onClick={togglePodcastPlayback}
+                    className="w-14 h-14 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-xl shadow-orange-600/30 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    {isPlayingPodcast ? <Pause size={24} className="fill-current" /> : <Play size={24} className="fill-current ml-1" />}
+                  </button>
+
+                  <button onClick={skipForward} className="p-2 opacity-60 hover:opacity-100 hover:bg-white/10 rounded-full transition-all" title="+10s">
+                    <ArrowLeft size={20} className="" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={downloadPodcast}
+                  className={`p-2 rounded-full transition-all opacity-50 hover:opacity-100 ${theme === 'dark' ? 'text-white hover:text-orange-500 hover:bg-white/10' : 'text-neutral-500 hover:text-orange-600 hover:bg-neutral-200'}`}
+                  title="Descargar MP3"
+                >
+                  <Download size={20} />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )
+      }
+    </main >
   );
 };
 

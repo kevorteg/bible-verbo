@@ -19,15 +19,16 @@ interface SidebarProps {
   onOpenAuth: () => void;
   onNavigateToProfile: () => void;
   onNavigateToMap: () => void;
-  onNavigateToCommunity: () => void;
   onNavigateToAdmin: () => void;
+  onNavigateToLeaders: () => void;
+  onNavigateToGames: () => void;
   currentView: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  isOpen, onClose, theme, bibleId, setBibleId, apiBooks, currentBook, onSelectBook, onOpenAuth, onNavigateToProfile, onNavigateToMap, onNavigateToCommunity, onNavigateToAdmin, currentView
+  isOpen, onClose, theme, bibleId, setBibleId, apiBooks, currentBook, onSelectBook, onOpenAuth, onNavigateToProfile, onNavigateToMap, onNavigateToAdmin, onNavigateToLeaders, onNavigateToGames, currentView
 }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const containerClasses = theme === 'dark'
     ? 'bg-[#0d1e3a] border-blue-900/40 shadow-2xl'
@@ -86,11 +87,13 @@ const Sidebar: React.FC<SidebarProps> = ({
         user={user}
         onNavigateToProfile={onNavigateToProfile}
         onOpenAuth={onOpenAuth}
-        onNavigateToCommunity={onNavigateToCommunity}
         onNavigateToMap={onNavigateToMap}
+        onNavigateToLeaders={onNavigateToLeaders}
+        onNavigateToGames={onNavigateToGames}
         currentView={currentView}
         theme={theme}
         textClasses={textClasses}
+        onLogout={logout}
       />
     </aside>
   );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { QuizQuestion, Book, Chapter, Verse } from '../types';
-import * as GeminiService from '../services/geminiService';
+import { generateChapterQuiz } from '../services/aiFeatures';
 
 export const useQuiz = (
     currentBook: Book | null,
@@ -25,7 +25,7 @@ export const useQuiz = (
         setQuizState('loading');
         const fullText = verses.map(v => v.text).join(" ");
         try {
-            const questions = await GeminiService.generateChapterQuiz(fullText, currentBook.name, currentChapter.number, difficulty, topic);
+            const questions = await generateChapterQuiz(fullText, currentBook.name, currentChapter.number, difficulty, topic);
             if (questions.length > 0) {
                 setQuizData(questions);
                 setQuizState('active');

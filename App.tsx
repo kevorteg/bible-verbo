@@ -11,20 +11,21 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthModal from './components/AuthModal';
 import ProfilePage from './components/ProfilePage';
 import MapPage from './components/MapPage';
-import PrayerWall from './components/PrayerWall';
 import AdminDashboard from './components/AdminDashboard';
+import { LeaderTools } from './components/LeaderTools';
 import { ToastNotification } from './components/ToastNotification';
 import { useBibleReader } from './hooks/useBibleReader';
 import { useChat } from './hooks/useChat';
 import { useQuiz } from './hooks/useQuiz';
 import * as GeminiService from './services/geminiService'; // For direct calls if any remaining
+import { GamesPage } from './components/GamesPage';
 
 // Wraps the main content to provide auth context cleanly
 const AppContent = () => {
   const { user, updateStats } = useAuth();
 
   const [theme, setTheme] = useState<'dark' | 'light' | 'sepia'>('dark');
-  const [currentView, setCurrentView] = useState<'reader' | 'dashboard' | 'map' | 'community' | 'admin'>('reader');
+  const [currentView, setCurrentView] = useState<'reader' | 'dashboard' | 'map' | 'admin' | 'leaders' | 'games'>('reader');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -215,6 +216,8 @@ const AppContent = () => {
             chatHistory={chat.chatMessages}
             onNavigateToLocation={(loc) => detectAndNavigate(loc)}
             onBackToReader={() => setCurrentView('reader')}
+            onNavigateToAdmin={() => setCurrentView('admin')}
+            onNavigateToLeaders={() => setCurrentView('leaders')}
           />
         </div>
       );
@@ -231,23 +234,31 @@ const AppContent = () => {
       );
     }
 
-    if (currentView === 'community') {
+
+
+    if (currentView === 'leaders') {
       return (
         <div className={containerClass}>
-          {user ? (
-            <PrayerWall
-              theme={theme}
-              onOpenSidebar={() => setSidebarOpen(true)}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-4 opacity-50 p-6 text-center">
-              <Heart size={48} className="text-red-500 mb-2" />
-              <h2 className="text-lg font-bold">Comunidad Privada</h2>
-              <p className="text-sm">Debes iniciar sesión para acceder al Muro de Clamor y orar por otros.</p>
-              <button onClick={() => setShowAuthModal(true)} className="bg-orange-600 text-white px-6 py-2 rounded-full font-bold uppercase text-xs">Iniciar Sesión</button>
-            </div>
-          )}
+          <LeaderTools
+            theme={theme}
+            onBack={() => setCurrentView('reader')}
+            currentBook={currentBook}
+            currentChapter={currentChapter}
+          />
         </div>
+      );
+    }
+
+    if (currentView === 'games') {
+      return (
+        <GamesPage
+          onBack={() => setCurrentView('reader')}
+          onStartQuiz={() => {
+            setRightPanelOpen(true);
+            if (activeTab !== 'quiz') setActiveTab('quiz');
+          }}
+          theme={theme}
+        />
       );
     }
 
@@ -281,6 +292,11 @@ const AppContent = () => {
         onClearHighlight={() => setHighlightedVerseId(null)}
         readChapters={readChapters}
         onToggleReadChapter={handleToggleReadChapter}
+        onStartQuiz={() => {
+          setRightPanelOpen(true);
+          setActiveTab('quiz');
+          quiz.setTopic('aplicacion');
+        }}
       />
     );
   };
@@ -345,12 +361,13 @@ const AppContent = () => {
           setCurrentView('map');
           if (window.innerWidth < 1024) setSidebarOpen(false);
         }}
-        onNavigateToCommunity={() => {
-          setCurrentView('community');
-          if (window.innerWidth < 1024) setSidebarOpen(false);
-        }}
+
         onNavigateToAdmin={() => {
           setCurrentView('admin');
+          if (window.innerWidth < 1024) setSidebarOpen(false);
+        }}
+        onNavigateToLeaders={() => {
+          setCurrentView('leaders');
           if (window.innerWidth < 1024) setSidebarOpen(false);
         }}
         currentView={currentView}

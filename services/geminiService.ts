@@ -4,13 +4,13 @@ import { ChatMessage, QuizQuestion } from "../types";
 import { getMjSystemPromptInfo } from "../mj_info";
 import { decodeBase64, decodeAudioData } from "./audioUtils";
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+export const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 // Models
-const CHAT_MODEL_STANDARD = 'gemini-3-flash-preview';
-const CHAT_MODEL_MAPS = 'gemini-2.5-flash'; // Maps grounding solo funciona en 2.5
-const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
-const IMAGE_MODEL = 'gemini-2.5-flash-image';
+export const CHAT_MODEL_STANDARD = 'gemini-3-flash-preview';
+export const CHAT_MODEL_MAPS = 'gemini-2.5-flash'; // Maps grounding solo funciona en 2.5
+export const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
+export const IMAGE_MODEL = 'gemini-2.5-flash-image';
 
 export const generateChatResponse = async (
   history: ChatMessage[],
@@ -181,7 +181,7 @@ export const generateBiblicalImage = async (verseText: string): Promise<string |
 
 export const generateChapterQuiz = async (chapterText: string, bookName: string, chapterNum: string, difficulty: string = 'medio', topic: string = 'general'): Promise<QuizQuestion[]> => {
   try {
-    const modelToUse = 'gemini-1.5-flash';
+    const modelToUse = CHAT_MODEL_STANDARD;
 
     let difficultyPrompt = "";
     switch (difficulty) {
@@ -236,6 +236,65 @@ export const generateChapterQuiz = async (chapterText: string, bookName: string,
   } catch (e: any) {
     console.error("Error generating quiz:", e);
     throw new Error(e.message || "Error desconocido al generar quiz");
+  }
+};
+
+export const generateLeaderActivity = async (
+  type: string,
+  format: string,
+  target: string,
+  topic: string,
+  bookContext: string,
+  chapterContext: string
+): Promise<string> => {
+  try {
+    const prompt = `
+      Actúa como un experto en pedagogía juvenil cristiana y mentor de líderes.
+      Tu tarea es diseñar una DINÁMICA O JUEGO GRUPAL creativo, bíblico y memorable.
+      
+      PARÁMETROS DEL LÍDER:
+      - TIPO DE ACTIVIDAD: ${type}
+      - FORMATO/LUGAR: ${format}
+      - PÚBLICO OBJETIVO: ${target}
+      - TEMA/ENSEÑANZA: ${topic}
+      - CONTEXTO BÍBLICO (Opcional): ${bookContext} ${chapterContext}
+
+      Genera una respuesta estructurada en formato JSON EXCLUSIVAMENTE (sin markdown de código).
+      El JSON debe tener esta estructura exacta:
+      {
+        "title": "Título Creativo y Pegajoso",
+        "time": "Tiempo estimado",
+        "materials": ["Material 1", "Material 2"],
+        "objective": "Objetivo pedagógico breve",
+        "steps": [
+          { "title": "Nombre del Paso", "description": "Instrucción clara" }
+        ],
+        "biblicalConnection": "Explicación de la conexión con el pasaje",
+        "questions": ["Pregunta 1", "Pregunta 2", "Pregunta 3"]
+      }
+
+      Usa un tono dinámico, inspirador y juvenil. NO uses emojis en la respuesta.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: CHAT_MODEL_STANDARD,
+      contents: [{ parts: [{ text: prompt }] }],
+      config: { responseMimeType: "application/json" }
+    });
+
+    return response.text || "{}";
+  } catch (e: any) {
+    console.error("Error generating activity:", e);
+    // Fallback JSON en caso de error para no romper la UI nueva
+    return JSON.stringify({
+      title: "Error de Conexión",
+      time: "0 min",
+      materials: [],
+      objective: "No pudimos generar la actividad. Intenta de nuevo.",
+      steps: [],
+      biblicalConnection: "",
+      questions: []
+    });
   }
 };
 
