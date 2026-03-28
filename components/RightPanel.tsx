@@ -280,9 +280,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
                       <p className={`text-[9px] font-black uppercase tracking-widest opacity-50 text-left ${tabTextClasses}`}>Nivel de Dificultad</p>
                       <div className="flex gap-2">
                         {[
-                          { id: 'facil', label: 'Explorador', icon: '🌱' },
-                          { id: 'medio', label: 'Discípulo', icon: '🔥' },
-                          { id: 'dificil', label: 'Maestro', icon: '👑' }
+                          { id: 'facil', label: 'Explorador', icon: '' },
+                          { id: 'medio', label: 'Discípulo', icon: '' },
+                          { id: 'dificil', label: 'Maestro', icon: '' }
                         ].map((d) => (
                           <button
                             key={d.id}

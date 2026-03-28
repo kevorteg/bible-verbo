@@ -5,9 +5,9 @@ export const DEFAULT_BIBLE_ID = "592420522e16049f-01"; // Reina Valera 1909
 
 export const BIBLE_VERSIONS = [
   { name: "Reina Valera 1909", id: "592420522e16049f-01" },
-  { name: "Nueva Biblia Viva", id: "6b7f504f1b6050c1-01" },
-  { name: "Palabra de Dios para ti", id: "48acedcf8595c754-01" },
-  { name: "Versión Biblia Libre", id: "482ddd53705278cc-02" }
+  { name: "Nueva Traducción Viviente", id: "826f63861180e056-01" },
+  { name: "New International Version (NIV)", id: "78a9f6124f344018-01" },
+  { name: "New American Standard Bible (NASB)", id: "b8ee27bcd1cae43a-01" }
 ];
 
 export const THEME_CLASSES = {

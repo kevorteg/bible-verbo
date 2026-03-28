@@ -2,7 +2,7 @@
 import { API_BIBLE_KEY } from '../constants';
 import { BibleApiResponse, Book, Chapter, Verse, BibleContentNode } from '../types';
 
-const BASE_URL = 'https://api.scripture.api.bible/v1/bibles';
+const BASE_URL = 'https://rest.api.bible/v1/bibles';
 
 // Proxy CORS para resolver el problema de "NetworkError" en el navegador
 const PROXY_URL = 'https://corsproxy.io/?';

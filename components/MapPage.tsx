@@ -150,7 +150,7 @@ const MapPage: React.FC<MapPageProps> = ({ theme, onOpenSidebar }) => {
                                 font-size: 11px;
                                 font-weight: 700;
                                 transition: all 0.2s;
-                              ">📍 INICIAR RUTA</a>
+                              "> INICIAR RUTA</a>
                           </div>
                       `);
                   markers.push(marker);
