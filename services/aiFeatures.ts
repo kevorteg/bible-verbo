@@ -1,7 +1,7 @@
 
 import { Modality } from "@google/genai";
 import { ai, CHAT_MODEL_STANDARD, TTS_MODEL, IMAGE_MODEL } from "./geminiService";
-import { decodeBase64, decodeAudioData } from "./audioUtils";
+import { decodeBase64, pcmToWavBlob, audioBufferToWav } from "./audioUtils";
 import { QuizQuestion } from "../types";
 
 export const generatePodcastEpisode = async (
@@ -29,7 +29,12 @@ export const generatePodcastEpisode = async (
         }
 
         const scriptPrompt = `
-        (NOTA DE DIRECCIÓN: El output debe ser en Español Latinoamericano neutro. Evita terminología, modismos o acentos de España. Usa un tono fresco y joven sin sonar forzado.)
+        (NOTA DE DIRECCIÓN: El output debe ser en Español Latinoamericano neutro. Evita terminología o acentos de España. Usa un tono fresco, joven y dinámico pero PROFUNDAMENTE RESPETUOSO y CRISTIANO.)
+
+        PROHIBICIONES ESTRICTAS:
+        - NO uses jerga de calle ni modismos informales (ESTRICTAMENTE PROHIBIDO usar palabras como "parce", "parcero", "pana", "wey" o similares).
+        - El lenguaje debe ser digno de una iglesia (IPUC), manteniendo una alta reverencia por la Palabra de Dios, aunque el formato sea juvenil.
+        - NO uses lenguaje secular para referirte a cosas santas.
 
         Actúa como el productor del podcast "VerboCast".
         Genera un guion de conversación de aprox 2 minutos sobre este texto bíblico:
@@ -63,7 +68,7 @@ export const generatePodcastEpisode = async (
         // --- PASO 2: EL ESTUDIO DE GRABACIÓN (MODELO DE AUDIO) ---
         // Tomamos el guion generado arriba y se lo damos al modelo TTS Multi-Voz
 
-        const promptTTS = `TTS the following conversation:\n${script}`;
+        const promptTTS = `Genera un podcast en español entre Kevin y Liz:\n${script}`;
 
         const audioResponse = await ai.models.generateContent({
             model: TTS_MODEL,
@@ -75,8 +80,8 @@ export const generatePodcastEpisode = async (
                         speakerVoiceConfigs: [
                             {
                                 speaker: 'Kevin',
-                                // Puck es una voz masculina más joven y dinámica
-                                voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } }
+                                // Fenrir: voz masculina profunda y natural
+                                voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Fenrir' } }
                             },
                             {
                                 speaker: 'Liz',
@@ -93,18 +98,22 @@ export const generatePodcastEpisode = async (
         const base64Audio = audioResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
         if (base64Audio) {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            }
-            if (audioContext.state === 'suspended') await audioContext.resume();
+            // Decodificamos de base64 a bytes crudos PCM
+            const pcmBytes = decodeBase64(base64Audio);
 
-            const audioBytes = decodeBase64(base64Audio);
-            const audioBuffer = await decodeAudioData(audioBytes, audioContext);
+            // Opción 1: Crear un WAV básico directamente de los bytes (rápido)
+            const basicWavBlob = pcmToWavBlob(pcmBytes, 24000, 1);
 
-            // Convert to Blob for download (assuming MP3 from Gemini)
-            const blob = new Blob([audioBytes as any], { type: 'audio/mp3' });
+            // Necesitamos el AudioContext para tener la duración exacta y procesarlo
+            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+            const arrayBuffer = await basicWavBlob.arrayBuffer();
+            const decodedAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-            return { buffer: audioBuffer, blob };
+            // Opción 2: Usar nuestra nueva función robusta para generar el Blob descargable final
+            // a partir del buffer decodificado y confiable del navegador:
+            const finalWavBlob = audioBufferToWav(decodedAudioBuffer);
+
+            return { buffer: decodedAudioBuffer, blob: finalWavBlob };
         }
         return null;
 

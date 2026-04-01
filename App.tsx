@@ -19,6 +19,7 @@ import { useChat } from './hooks/useChat';
 import { useQuiz } from './hooks/useQuiz';
 import * as GeminiService from './services/geminiService'; // For direct calls if any remaining
 import { GamesPage } from './components/GamesPage';
+import { DailyPromiseModal } from './components/DailyPromiseModal';
 
 // Wraps the main content to provide auth context cleanly
 const AppContent = () => {
@@ -39,6 +40,18 @@ const AppContent = () => {
   const [showChapterGrid, setShowChapterGrid] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDailyPromise, setShowDailyPromise] = useState(false);
+
+  useEffect(() => {
+    // Show Daily Promise once per day on init
+    const today = new Date().toISOString().split('T')[0];
+    const shownKey = `verbo_promise_shown_${today}`;
+    if (!localStorage.getItem(shownKey) && typeof window !== 'undefined') {
+      // Delay it slightly so it pops up nicely after render
+      setTimeout(() => setShowDailyPromise(true), 1500);
+      localStorage.setItem(shownKey, 'true');
+    }
+  }, []);
 
   const [fontSize, setFontSize] = useState(18);
   const [fontFamily, setFontFamily] = useState("'Crimson Text', serif");
@@ -337,6 +350,13 @@ const AppContent = () => {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+      />
+
+      <DailyPromiseModal
+        isOpen={showDailyPromise}
+        onClose={() => setShowDailyPromise(false)}
+        user={user}
+        theme={theme}
       />
 
       <Sidebar

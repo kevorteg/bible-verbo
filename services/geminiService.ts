@@ -7,10 +7,11 @@ import { decodeBase64, decodeAudioData } from "./audioUtils";
 export const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 // Models
-export const CHAT_MODEL_STANDARD = 'gemini-3-flash-preview';
-export const CHAT_MODEL_MAPS = 'gemini-2.5-flash'; // Maps grounding solo funciona en 2.5
+export const CHAT_MODEL_STANDARD = 'gemini-2.5-flash';
+export const CHAT_MODEL_MAPS = 'gemini-2.5-flash';
+// Audio: gemini-2.5-flash-preview-tts es el único modelo con modalidad AUDIO
 export const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
-export const IMAGE_MODEL = 'gemini-2.5-flash-image';
+export const IMAGE_MODEL = 'gemini-2.5-flash-preview-image-generation';
 
 export const generateChatResponse = async (
   history: ChatMessage[],
@@ -86,6 +87,37 @@ export const generateChatResponse = async (
   } catch (error) {
     console.error("Gemini Chat Error:", error);
     return "Lo siento, hubo un error técnico. Por favor intenta de nuevo.";
+  }
+};
+
+export const generateDailyPromise = async (userName?: string): Promise<{verse: string, text: string}> => {
+  try {
+    const prompt = `
+      Actúa como "Verbo", un mentor espiritual. Genera una "Promesa del Día" inspiradora (máximo 2 oraciones breves) y un versículo bíblico corto relacionado.
+      ${userName ? `Dirígete al usuario por su nombre: ${userName}.` : 'Habla en segunda persona.'}
+      
+      Devuelve ÚNICAMENTE un JSON válido con este formato exacto:
+      {
+        "verse": "(Ej: Isaías 41:10)",
+        "text": "Mensaje de ánimo inspirador..."
+      }
+    `;
+
+    const response = await ai.models.generateContent({
+      model: CHAT_MODEL_STANDARD,
+      contents: [{ parts: [{ text: prompt }] }],
+      config: { responseMimeType: "application/json" }
+    });
+
+    const jsonStr = response.text || "{}";
+    const cleanJson = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanJson);
+  } catch (e: any) {
+    console.error("Error generating daily promise:", e);
+    return {
+      verse: "Jeremías 33:3",
+      text: "Clama a mí, y yo te responderé, y te enseñaré cosas grandes y ocultas que tú no conoces."
+    };
   }
 };
 
