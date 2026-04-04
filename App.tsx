@@ -439,6 +439,9 @@ const AppContent = () => {
           onSetQuizDifficulty={quiz.setDifficulty}
           onSetQuizTopic={quiz.setTopic}
           onNavigateToMapPage={() => setCurrentView('map')}
+          quizRecommendations={quiz.recommendations}
+          isGeneratingRecommendations={quiz.isGeneratingRecommendations}
+          quizUnlockedAchievement={quiz.unlockedAchievement}
         />
       </div>
     </div>

@@ -1,10 +1,11 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import {
   X, Quote, ImageIcon, Copy, Volume2, StickyNote, Book,
-  BookMarked, Trash2, Send, Loader2, Microscope, PenTool, HeartHandshake, MessageCircle, Sunrise, Share2, BrainCircuit, Trophy, RefreshCcw, Save, Check, MapPin, Navigation, Map as MapIcon, Users
+  BookMarked, Trash2, Send, Loader2, Microscope, PenTool, HeartHandshake, MessageCircle, Sunrise, Share2, BrainCircuit, Trophy, RefreshCcw, Save, Check, MapPin, Navigation, Map as MapIcon, Users, ChevronRight
 } from 'lucide-react';
-import { ChatMessage, Verse, Bookmark, NoteMap, Book as IBook, Chapter, QuizQuestion, ChurchLocation } from '../types';
+import { ChatMessage, Verse, Bookmark, NoteMap, Book as IBook, Chapter, QuizQuestion, ChurchLocation, Achievement } from '../types';
+import { TriviaRecommendation } from '../services/aiFeatures';
+import confetti from 'canvas-confetti';
 
 interface RightPanelProps {
   isOpen: boolean;
@@ -47,6 +48,9 @@ interface RightPanelProps {
   quizTopic?: 'general' | 'historia' | 'teologia' | 'aplicacion';
   onSetQuizDifficulty?: (d: 'facil' | 'medio' | 'dificil') => void;
   onSetQuizTopic?: (t: 'general' | 'historia' | 'teologia' | 'aplicacion') => void;
+  quizRecommendations?: TriviaRecommendation[];
+  isGeneratingRecommendations?: boolean;
+  quizUnlockedAchievement?: Achievement | null;
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
@@ -56,7 +60,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
   notes, onSaveNote, bookmarks, onToggleBookmark, onNavigateToBookmark,
   onOpenShare, onStartQuiz, quizData, quizState, currentQuizIndex, quizScore, onAnswerQuiz, onResetQuiz, onNavigateToMapPage,
   quizSelectedOption, quizShowFeedback, onQuizNextQuestion, quizUserAnswers,
-  quizDifficulty, quizTopic, onSetQuizDifficulty, onSetQuizTopic
+  quizDifficulty, quizTopic, onSetQuizDifficulty, onSetQuizTopic,
+  quizRecommendations, isGeneratingRecommendations, quizUnlockedAchievement
 }) => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
@@ -79,6 +84,25 @@ const RightPanel: React.FC<RightPanelProps> = ({
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages, isTyping, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'quiz' && quizState === 'finished' && quizData.length > 0) {
+      if (quizScore >= quizData.length * 0.8) {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#f97316', '#3b82f6', '#10b981', '#f59e0b']
+        });
+      } else if (quizScore >= quizData.length * 0.5) {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+  }, [quizState, activeTab, quizScore, quizData.length]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -215,16 +239,40 @@ const RightPanel: React.FC<RightPanelProps> = ({
               {quizState === 'finished' && (
                 <div className="flex flex-col items-center h-full animate-in zoom-in pb-10">
                   <div className="flex flex-col items-center justify-center text-center gap-4 mt-8 mb-8">
-                    <Trophy size={80} className="text-yellow-500 drop-shadow-2xl" strokeWidth={1.5} />
+                    <Trophy size={80} className={`text-yellow-500 drop-shadow-2xl ${quizScore === quizData.length ? 'animate-bounce' : ''}`} strokeWidth={1.5} />
                     <div>
-                      <h3 className={`text-2xl font-black uppercase tracking-widest mb-1 text-white`}>¡Completado!</h3>
-                      <p className={`text-sm opacity-70 text-blue-200`}>Tu puntuación final</p>
+                      <h3 className={`text-2xl font-black uppercase tracking-widest mb-1 text-white`}>
+                        {quizScore === quizData.length ? '¡Perfección!' : quizScore >= quizData.length * 0.6 ? '¡Gran Trabajo!' : '¡Buen Intento!'}
+                      </h3>
+                      <p className={`text-sm opacity-70 text-blue-200`}>
+                        {quizScore === quizData.length ? 'Dominas completamente este tema.' : quizScore >= quizData.length * 0.6 ? 'Estás en el camino correcto.' : 'La práctica hace al maestro. Sigue así.'}
+                      </p>
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-6xl font-black text-orange-500">{quizScore}</span>
                       <span className="text-3xl font-black text-blue-200/30">/ {quizData.length}</span>
                     </div>
                   </div>
+
+                  {/* Logro / Medalla */}
+                  {quizUnlockedAchievement && (
+                    <div className={`w-full p-6 animate-in slide-in-from-top-10 fade-in duration-700 rounded-[2rem] mb-8 ${quizUnlockedAchievement.type === 'expert' ? 'bg-gradient-to-tr from-yellow-500/20 to-orange-400/10 border border-yellow-500/50 shadow-[0_0_40px_rgba(234,179,8,0.3)]' : 'bg-gradient-to-tr from-orange-900/40 to-stone-800/40 border border-stone-500/30 shadow-xl'}`}>
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <span className={`text-6xl mb-4 ${quizUnlockedAchievement.type === 'expert' ? 'animate-bounce drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]' : 'animate-pulse drop-shadow-lg'}`}>
+                                {quizUnlockedAchievement.icon}
+                            </span>
+                            <div className={`px-3 py-1 text-[10px] uppercase font-black tracking-[0.2em] rounded-full mb-2 ${quizUnlockedAchievement.type === 'expert' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-stone-500/20 text-stone-300'}`}>
+                                {quizUnlockedAchievement.type === 'expert' ? '¡Logro Excelente!' : '¡Nueva Medalla!'}
+                            </div>
+                            <h4 className={`text-xl font-black uppercase tracking-widest mb-3 ${quizUnlockedAchievement.type === 'expert' ? 'text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'text-stone-100'}`}>
+                                {quizUnlockedAchievement.title}
+                            </h4>
+                            <p className="text-xs leading-relaxed text-blue-100/70 max-w-[220px]">
+                                {quizUnlockedAchievement.description}
+                            </p>
+                        </div>
+                    </div>
+                  )}
 
                   {/* Error Review Section */}
                   {quizScore < quizData.length && (
@@ -256,6 +304,43 @@ const RightPanel: React.FC<RightPanelProps> = ({
                       </div>
                     </div>
                   )}
+
+                  {/* Recommendations Section */}
+                  <div className="w-full mb-6">
+                    <div className="flex items-center gap-2 mb-3 px-1 mt-6">
+                      <div className="bg-yellow-500/20 p-1 rounded">
+                        <BrainCircuit size={14} className="text-yellow-400" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase text-yellow-400 tracking-widest">Sigue Aprendiendo</span>
+                    </div>
+
+                    {isGeneratingRecommendations ? (
+                      <div className="flex flex-col items-center justify-center p-8 bg-[#1a0f0f] border border-blue-900/30 rounded-xl">
+                        <Loader2 className="animate-spin text-orange-500 mb-3" size={28} />
+                        <p className="text-[9px] uppercase tracking-widest text-white/50 font-bold">La IA está analizando tu resultado...</p>
+                      </div>
+                    ) : quizRecommendations && quizRecommendations.length > 0 ? (
+                      <div className="space-y-3">
+                        {quizRecommendations.map((rec, i) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              onSendMessage(rec.prompt, true);
+                            }}
+                            className="w-full p-4 rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/5 hover:from-yellow-500/20 hover:to-orange-500/10 transition-all text-left group"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h4 className="text-sm font-black text-yellow-400 mb-1">{rec.title}</h4>
+                                <p className="text-xs text-white/70 leading-relaxed">{rec.description}</p>
+                              </div>
+                              <ChevronRight size={18} className="text-yellow-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 mt-1" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
 
                   <button
                     onClick={onResetQuiz}

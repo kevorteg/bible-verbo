@@ -16,7 +16,8 @@ export const THEME_CLASSES = {
   sepia: 'bg-[#f4ecd8] text-[#5b4636] border-[#e2d5b6]'
 };
 
-import logoMj from './assets/logo.png';
 
-export const MJ_WEBSITE_URL = "https://www.misionjuvenild5.org";
+import logoMj from './assets/logo2.png';
+
+export const MJ_WEBSITE_URL = "#";
 export const MJ_LOGO_URL = logoMj;

@@ -242,7 +242,8 @@ const Reader: React.FC<ReaderProps> = ({
       const element = verseRefs.current[highlightedVerseId];
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Centramos el versículo
-        setTimeout(() => { isAutoScrolling.current = false; }, 1000);
+        // Aumentar el tiempo para que el autoscroll termine antes de permitir borrar por evento de scroll
+        setTimeout(() => { isAutoScrolling.current = false; }, 2000);
         // Force highlight cleanup after 5 seconds
         setTimeout(() => onClearHighlight(), 5000);
       } else if (attempts < maxAttempts) {
@@ -546,8 +547,9 @@ const Reader: React.FC<ReaderProps> = ({
                     onClick={() => setSelectedVerse(v)}
                   >
                     {isHighlighted && (
-                      <div className="absolute -right-3 top-1/2 -translate-y-1/2 bg-orange-500 text-white p-1 rounded-full shadow-lg animate-bounce hidden lg:block z-20">
-                        <ArrowLeft size={20} strokeWidth={3} />
+                      <div className="absolute -right-4 top-1/2 -translate-y-1/2 bg-orange-600 text-white pl-3 pr-2 py-1.5 rounded-full shadow-2xl animate-bounce hidden sm:flex items-center gap-1 z-20">
+                        <ArrowLeft size={16} strokeWidth={3} />
+                        <span className="text-[10px] uppercase font-black tracking-widest whitespace-nowrap pr-1">Aquí</span>
                       </div>
                     )}
 

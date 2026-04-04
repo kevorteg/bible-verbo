@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { ArrowLeft, Sparkles, BrainCircuit, Grid3X3, Zap, Trophy, Lock } from 'lucide-react';
+import { ArrowLeft, Sparkles, BrainCircuit, Grid3X3, Zap, Trophy, Lock, Medal } from 'lucide-react';
+import { useAchievements } from '../hooks/useAchievements';
 
 interface GamesPageProps {
     onBack: () => void;
@@ -12,6 +13,8 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack, onStartQuiz, theme
     const isDark = theme === 'dark';
     const textPrimary = isDark ? 'text-white' : 'text-slate-900';
     const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
+
+    const { achievements } = useAchievements();
 
     const games = [
         {
@@ -101,6 +104,44 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onBack, onStartQuiz, theme
                         </button>
                     ))}
                 </div>
+
+                {/* Achievements Gallery */}
+                {achievements.length > 0 && (
+                    <div className="mt-16 animate-in slide-in-from-bottom-5">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="p-2 bg-yellow-500/20 rounded-xl">
+                                <Medal size={24} className="text-yellow-500" strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h2 className={`text-2xl font-black tracking-tight ${textPrimary}`}>Vitrina de Logros</h2>
+                                <p className={`text-sm ${textSecondary}`}>Colecciona medallas mientras juegas y aprendes.</p>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {/* Reverse to show newest first without mutating the original array */}
+                            {[...achievements].reverse().map((ach) => (
+                                <div key={ach.id} className={`p-6 flex flex-col items-center justify-center text-center rounded-[2rem] border ${ach.type === 'expert' ? 'bg-gradient-to-tr from-yellow-500/10 to-orange-400/5 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.05)]' : isDark ? 'bg-[#112240] border-white/5' : 'bg-white border-slate-200 shadow-sm'} transition-all hover:scale-105 hover:shadow-xl`}>
+                                    <div className="text-5xl mb-4 drop-shadow-md">
+                                        {ach.icon}
+                                    </div>
+                                    <div className={`px-2 py-0.5 text-[9px] uppercase tracking-[0.2em] font-black rounded-full mb-2 ${ach.type === 'expert' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400' : isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                                        {ach.type === 'expert' ? 'Experto' : (ach.type === 'honor' ? 'Honor' : 'Curiosidad')}
+                                    </div>
+                                    <div className={`font-black text-sm uppercase tracking-wider mb-2 ${textPrimary}`}>
+                                        {ach.title}
+                                    </div>
+                                    <div className={`text-xs leading-relaxed opacity-80 ${textSecondary}`}>
+                                        {ach.description}
+                                    </div>
+                                    <div className="mt-3 text-[10px] uppercase font-bold tracking-widest text-slate-400/50">
+                                        {new Date(ach.dateUnlocked).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>

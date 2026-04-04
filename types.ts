@@ -102,3 +102,12 @@ export interface PrayerRequest {
   has_prayed?: boolean; // Estado local para saber si yo ya oré
   testimony?: string; // NUEVO: Si existe, es que ya fue respondida
 }
+
+export interface Achievement {
+  id: string; // Ej: genesis-1-experto
+  title: string;
+  description: string;
+  icon: string; // Emoji
+  dateUnlocked: string;
+  type: 'expert' | 'troll' | 'honor';
+}

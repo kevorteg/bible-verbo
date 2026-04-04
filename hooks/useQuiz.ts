@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { QuizQuestion, Book, Chapter, Verse } from '../types';
-import { generateChapterQuiz } from '../services/aiFeatures';
+import { generateChapterQuiz, TriviaRecommendation, generateTriviaRecommendations, TriviaResult } from '../services/aiFeatures';
+import { useAchievements } from './useAchievements';
+import { Achievement } from '../types';
 
 export const useQuiz = (
     currentBook: Book | null,
@@ -19,6 +21,12 @@ export const useQuiz = (
 
     const [difficulty, setDifficulty] = useState<'facil' | 'medio' | 'dificil'>('medio');
     const [topic, setTopic] = useState<'general' | 'historia' | 'teologia' | 'aplicacion'>('general');
+
+    const [recommendations, setRecommendations] = useState<TriviaRecommendation[]>([]);
+    const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
+    const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
+
+    const { saveAchievement } = useAchievements();
 
     const startQuiz = async () => {
         if (!currentBook || !currentChapter || verses.length === 0) return;
@@ -72,6 +80,35 @@ export const useQuiz = (
             setCurrentQuizIndex(prev => prev + 1);
         } else {
             setQuizState('finished');
+            
+            if (currentBook && currentChapter) {
+                setIsGeneratingRecommendations(true);
+                generateTriviaRecommendations(
+                    currentBook.name,
+                    currentChapter.number,
+                    quizScore,
+                    quizData.length,
+                    topic
+                ).then((recs: TriviaResult) => {
+                    setRecommendations(recs.recommendations || []);
+                    if (recs.achievement) {
+                        // The user answered a question, quizScore is updated synchronously.
+                        // However, answerQuiz set it eagerly. Is it the latest? Yes.
+                        const finalScore = quizScore;
+                        const newAcc: Achievement = {
+                            id: `${currentBook.name}-${currentChapter.number}-${Date.now()}`,
+                            title: recs.achievement.title,
+                            description: recs.achievement.description,
+                            icon: recs.achievement.icon || '🏆',
+                            dateUnlocked: new Date().toISOString(),
+                            type: finalScore === quizData.length ? 'expert' : (finalScore >= quizData.length * 0.8 ? 'honor' : 'troll')
+                        };
+                        setUnlockedAchievement(newAcc);
+                        saveAchievement(newAcc);
+                    }
+                    setIsGeneratingRecommendations(false);
+                }).catch(() => setIsGeneratingRecommendations(false));
+            }
         }
     };
 
@@ -82,6 +119,9 @@ export const useQuiz = (
         setSelectedOption(null);
         setShowFeedback(false);
         setUserAnswers([]);
+        setRecommendations([]);
+        setIsGeneratingRecommendations(false);
+        setUnlockedAchievement(null);
     };
 
     return {
@@ -97,6 +137,8 @@ export const useQuiz = (
         nextQuestion,
         userAnswers,
         difficulty, setDifficulty,
-        topic, setTopic
+        topic, setTopic,
+        recommendations, isGeneratingRecommendations,
+        unlockedAchievement
     };
 };
