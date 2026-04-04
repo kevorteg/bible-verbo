@@ -20,6 +20,7 @@ import { useQuiz } from './hooks/useQuiz';
 import * as GeminiService from './services/geminiService'; // For direct calls if any remaining
 import { GamesPage } from './components/GamesPage';
 import { DailyPromiseModal } from './components/DailyPromiseModal';
+import { TourGuide } from './components/TourGuide';
 
 // Wraps the main content to provide auth context cleanly
 const AppContent = () => {
@@ -33,6 +34,8 @@ const AppContent = () => {
 
   // Ref para controlar que la sincronización solo ocurra una vez por sesión
   const hasSyncedRef = useRef(false);
+  // Guard para evitar doble ejecución de useEffect en React StrictMode
+  const initDoneRef = useRef(false);
 
   const [selectedVerse, setSelectedVerse] = useState<any | null>(null);
   const [bookmarks, setBookmarks] = useState<BookmarkType[]>([]);
@@ -41,15 +44,26 @@ const AppContent = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDailyPromise, setShowDailyPromise] = useState(false);
+  const [startTour, setStartTour] = useState(false);
 
   useEffect(() => {
-    // Show Daily Promise once per day on init
+    // Guard: StrictMode runs effects twice in dev, this prevents double-fire
+    if (initDoneRef.current) return;
+    initDoneRef.current = true;
+
     const today = new Date().toISOString().split('T')[0];
     const shownKey = `verbo_promise_shown_${today}`;
-    if (!localStorage.getItem(shownKey) && typeof window !== 'undefined') {
-      // Delay it slightly so it pops up nicely after render
-      setTimeout(() => setShowDailyPromise(true), 1500);
+    const tourSeen = localStorage.getItem('verbo_tour_completed');
+    const promiseShownToday = !!localStorage.getItem(shownKey);
+
+    if (!promiseShownToday) {
+      // First visit today: show promise modal, set the flag
       localStorage.setItem(shownKey, 'true');
+      setTimeout(() => setShowDailyPromise(true), 1500);
+      // Tour will start when user clicks "Amén" (via onClose handler)
+    } else if (!tourSeen) {
+      // Promise already seen today, tour not seen yet → start tour directly
+      setTimeout(() => setStartTour(true), 2500);
     }
   }, []);
 
@@ -329,6 +343,8 @@ const AppContent = () => {
   return (
     <div className={`flex h-screen w-full transition-colors duration-500 overflow-hidden ${theme === 'dark' ? 'bg-[#0a192f] text-neutral-100' : (theme === 'sepia' ? 'bg-[#f4ecd8] text-[#5b4636]' : 'bg-neutral-50 text-neutral-900')}`}>
 
+      <TourGuide theme={theme} startTour={startTour} onTourEnd={() => setStartTour(false)} />
+
       <ToastNotification
         message={toastMessage}
         onClose={() => setToastMessage(null)}
@@ -354,7 +370,13 @@ const AppContent = () => {
 
       <DailyPromiseModal
         isOpen={showDailyPromise}
-        onClose={() => setShowDailyPromise(false)}
+        onClose={() => {
+          setShowDailyPromise(false);
+          // Trigger the tour after the Amén – only if not seen before
+          if (!localStorage.getItem('verbo_tour_completed')) {
+            setStartTour(true);
+          }
+        }}
         user={user}
         theme={theme}
       />
@@ -388,6 +410,10 @@ const AppContent = () => {
         }}
         onNavigateToLeaders={() => {
           setCurrentView('leaders');
+          if (window.innerWidth < 1024) setSidebarOpen(false);
+        }}
+        onNavigateToGames={() => {
+          setCurrentView('games');
           if (window.innerWidth < 1024) setSidebarOpen(false);
         }}
         currentView={currentView}

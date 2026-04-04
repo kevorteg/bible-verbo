@@ -57,8 +57,8 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                 <button onClick={onNavigateToMap} className={`p-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition-all text-[10px] font-black uppercase border border-transparent ${currentView === 'map' ? 'bg-orange-600 text-white shadow-orange-500/20' : (theme === 'dark' ? 'bg-blue-900/20 text-orange-500 hover:bg-[#1a2d4d]' : 'bg-neutral-100 text-orange-600 hover:bg-white')}`}>
                     <Map size={14} /> Mapa
                 </button>
-                <button className={`p-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition-all text-[10px] font-black uppercase border border-transparent ${theme === 'dark' ? 'bg-blue-900/20 text-blue-200 hover:bg-[#1a2d4d]' : 'bg-neutral-100 text-neutral-600 hover:bg-white'}`} onClick={() => window.open(MJ_WEBSITE_URL, '_blank')}>
-                    <Globe size={14} /> Web
+                <button id="tour-arcade-biblico" onClick={onNavigateToGames} className={`p-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition-all text-[10px] font-black uppercase border border-transparent ${currentView === 'games' ? 'bg-orange-600 text-white shadow-orange-500/20' : (theme === 'dark' ? 'bg-blue-900/20 text-orange-500 hover:bg-[#1a2d4d]' : 'bg-neutral-100 text-orange-600 hover:bg-white')}`}>
+                    <Globe size={14} /> Arcade
                 </button>
             </div>
         </div>

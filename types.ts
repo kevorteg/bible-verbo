@@ -63,6 +63,7 @@ export interface User {
     notesCount: number;
     streakDays: number;
     lastActivityDate?: string;
+    achievements?: Achievement[];
   };
 }
 

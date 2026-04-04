@@ -28,7 +28,7 @@ export const useAchievements = () => {
 
                 if (user) {
                     // 2. We are logged in -> merge local with user stats and push to DB if Local had something new
-                    let dbAchievements: Achievement[] = (user.stats as any)?.achievements || [];
+                    let dbAchievements: Achievement[] = user.stats?.achievements || [];
                     
                     // Merge based on ID
                     const mergedMap = new Map<string, Achievement>();

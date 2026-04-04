@@ -1,41 +1,21 @@
-
-import { API_BIBLE_KEY } from '../constants';
 import { BibleApiResponse, Book, Chapter, Verse, BibleContentNode } from '../types';
 
-const BASE_URL = 'https://rest.api.bible/v1/bibles';
-
-// Proxy CORS para resolver el problema de "NetworkError" en el navegador
-const PROXY_URL = 'https://corsproxy.io/?';
-
-const headers = {
-  "api-key": API_BIBLE_KEY
-};
-
 /**
- * Función auxiliar para realizar peticiones manejando el proxy automáticamente.
- * Intenta primero vía proxy (para evitar CORS) y si falla, intenta directo.
+ * Realiza peticiones a través del proxy de Vercel (servidor) para ocultar la API Key.
  */
 async function getFromApi<T>(endpoint: string): Promise<T> {
-  const fullUrl = `${BASE_URL}${endpoint}`;
-  
-  // Usamos el proxy para envolver la URL de destino
-  const proxiedUrl = `${PROXY_URL}${encodeURIComponent(fullUrl)}`;
+  const url = `/api/bible?path=${encodeURIComponent(endpoint)}`;
 
   try {
-    const response = await fetch(proxiedUrl, { headers });
+    const response = await fetch(url);
     if (!response.ok) {
-       // Si el proxy devuelve error, lanzamos excepción para intentar el fallback
-       throw new Error(`Proxy/API Error: ${response.status}`);
+       const errorData = await response.json().catch(() => ({}));
+       throw new Error(errorData.error || `Server Error: ${response.status}`);
     }
     return await response.json();
   } catch (err) {
-    console.warn("Intento con proxy falló, intentando conexión directa...", err);
-    // Fallback: Intento directo (útil si el proxy cae o si el entorno no es un navegador estricto)
-    const response = await fetch(fullUrl, { headers });
-    if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-    }
-    return await response.json();
+    console.error("Bible Proxy Fetch Error:", err);
+    throw err;
   }
 }
 

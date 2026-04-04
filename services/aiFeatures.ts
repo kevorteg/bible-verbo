@@ -1,6 +1,4 @@
-
-import { Modality } from "@google/genai";
-import { ai, CHAT_MODEL_STANDARD, TTS_MODEL, IMAGE_MODEL } from "./geminiService";
+import { callGeminiProxy, CHAT_MODEL_STANDARD, TTS_MODEL, IMAGE_MODEL } from "./geminiService";
 import { decodeBase64, pcmToWavBlob, audioBufferToWav } from "./audioUtils";
 import { QuizQuestion } from "../types";
 
@@ -57,7 +55,7 @@ export const generatePodcastEpisode = async (
         `;
 
         // Llamamos a Gemini (versión texto) para que escriba el guion
-        const scriptResponse = await ai.models.generateContent({
+        const scriptResponse = await callGeminiProxy({
             model: CHAT_MODEL_STANDARD,
             contents: [{ parts: [{ text: scriptPrompt }] }]
         });
@@ -70,11 +68,11 @@ export const generatePodcastEpisode = async (
 
         const promptTTS = `Genera un podcast en español entre Kevin y Liz:\n${script}`;
 
-        const audioResponse = await ai.models.generateContent({
+        const audioResponse = await callGeminiProxy({
             model: TTS_MODEL,
             contents: [{ parts: [{ text: promptTTS }] }],
             config: {
-                responseModalities: [Modality.AUDIO],
+                responseModalities: ["AUDIO"],
                 speechConfig: {
                     multiSpeakerVoiceConfig: {
                         speakerVoiceConfigs: [
@@ -127,7 +125,7 @@ export const generateBiblicalImage = async (verseText: string): Promise<string |
     try {
         const prompt = `Sacred biblical art: ${verseText}. Painting style, warm lighting, respectful representation.`;
 
-        const response = await ai.models.generateContent({
+        const response = await callGeminiProxy({
             model: IMAGE_MODEL,
             contents: {
                 parts: [{ text: prompt }]
@@ -184,7 +182,7 @@ export const generateChapterQuiz = async (
         ]
         `;
 
-        const response = await ai.models.generateContent({
+        const response = await callGeminiProxy({
             model: CHAT_MODEL_STANDARD,
             contents: [{ parts: [{ text: prompt }] }],
             config: {
@@ -213,7 +211,7 @@ export const checkContentSafety = async (text: string): Promise<boolean> => {
         
         SOLO RESPONDE UNA PALABRA: "SAFE" o "UNSAFE".`;
 
-        const response = await ai.models.generateContent({
+        const response = await callGeminiProxy({
             model: CHAT_MODEL_STANDARD,
             contents: [{ parts: [{ text: prompt }] }]
         });
@@ -292,7 +290,7 @@ export const generateTriviaRecommendations = async (
         }
         `;
 
-        const response = await ai.models.generateContent({
+        const response = await callGeminiProxy({
             model: CHAT_MODEL_STANDARD,
             contents: [{ parts: [{ text: prompt }] }],
             config: {

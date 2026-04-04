@@ -1,15 +1,37 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
 import { ChatMessage, QuizQuestion } from "../types";
 import { getMjSystemPromptInfo } from "../mj_info";
 import { decodeBase64, decodeAudioData } from "./audioUtils";
 
-export const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+/**
+ * Proxy helper function to call Gemini through Vercel Functions.
+ */
+export async function callGeminiProxy(payload: any) {
+  try {
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Gemini Proxy Error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Gemini Proxy Fetch Error:", error);
+    throw error;
+  }
+}
 
 // Models
 export const CHAT_MODEL_STANDARD = 'gemini-2.5-flash';
 export const CHAT_MODEL_MAPS = 'gemini-2.5-flash';
-// Audio: gemini-2.5-flash-preview-tts es el único modelo con modalidad AUDIO
+// Audio: gemini-2.0-flash-preview-tts is the only model with modality AUDIO
 export const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 export const IMAGE_MODEL = 'gemini-2.5-flash-preview-image-generation';
 
@@ -69,7 +91,7 @@ export const generateChatResponse = async (
     const toolsConfig = userLocation ? [{ googleMaps: {} }] : undefined;
     const retrievalConfig = userLocation ? { retrievalConfig: { latLng: userLocation } } : undefined;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiProxy({
       model: modelToUse,
       contents: [
         { role: 'user', parts: [{ text: conversationStr }] }
@@ -103,7 +125,7 @@ export const generateDailyPromise = async (userName?: string): Promise<{verse: s
       }
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiProxy({
       model: CHAT_MODEL_STANDARD,
       contents: [{ parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" }
@@ -142,11 +164,11 @@ export const generateSpeech = async (text: string): Promise<void> => {
       .replace(/\[CONTACTO:.*?\]/g, 'Contacto disponible en pantalla.')
       .replace(/\[NAV:.*?\]/g, '');
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiProxy({
       model: TTS_MODEL,
       contents: [{ parts: [{ text: speechText }] }],
       config: {
-        responseModalities: [Modality.AUDIO],
+        responseModalities: ["AUDIO"],
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: { voiceName: 'Kore' },
@@ -185,7 +207,7 @@ export const generateBiblicalImage = async (verseText: string): Promise<string |
   try {
     const prompt = `Sacred biblical art: ${verseText}. Painting style, warm lighting, respectful representation.`;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiProxy({
       model: IMAGE_MODEL,
       contents: {
         parts: [{ text: prompt }]
@@ -254,7 +276,7 @@ export const generateChapterQuiz = async (chapterText: string, bookName: string,
       IMPORTANTE: Devuelve SOLO el JSON, sin markdown ni texto adicional.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiProxy({
       model: modelToUse,
       contents: [{ parts: [{ text: prompt }] }],
       config: {
@@ -308,7 +330,7 @@ export const generateLeaderActivity = async (
       Usa un tono dinámico, inspirador y juvenil. NO uses emojis en la respuesta.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiProxy({
       model: CHAT_MODEL_STANDARD,
       contents: [{ parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" }
@@ -342,7 +364,7 @@ export const checkContentSafety = async (text: string): Promise<boolean> => {
         
         SOLO RESPONDE UNA PALABRA: "SAFE" o "UNSAFE".`;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiProxy({
       model: CHAT_MODEL_STANDARD,
       contents: [{ parts: [{ text: prompt }] }]
     });

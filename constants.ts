@@ -1,6 +1,4 @@
-
-// La API Key ahora se carga desde variables de entorno por seguridad
-export const API_BIBLE_KEY = import.meta.env.VITE_API_BIBLE_KEY || "";
+// Nota: Las API Keys se manejan ahora internamente a través de /api/ proxies por seguridad.
 export const DEFAULT_BIBLE_ID = "592420522e16049f-01"; // Reina Valera 1909
 
 export const BIBLE_VERSIONS = [

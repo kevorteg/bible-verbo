@@ -12,7 +12,7 @@ interface User {
 export const useChat = (
     user: User | null,
     onNavigate: (text: string) => void,
-    setCurrentView: (view: 'reader' | 'dashboard' | 'map' | 'community' | 'admin') => void,
+    setCurrentView: (view: 'reader' | 'dashboard' | 'map' | 'admin' | 'leaders' | 'games') => void,
     setSidebarOpen: (open: boolean) => void
 ) => {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([

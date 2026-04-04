@@ -383,6 +383,7 @@ const Reader: React.FC<ReaderProps> = ({
 
           <div className="relative">
             <button
+              id="tour-generador-podcast"
               onClick={openPodcastModal}
               disabled={generatingPodcast}
               className={`p-2.5 rounded-full transition-all ${generatingPodcast ? 'animate-pulse text-orange-500 bg-orange-100' : 'hover:bg-blue-800/20 text-orange-500'}`}
@@ -504,7 +505,7 @@ const Reader: React.FC<ReaderProps> = ({
 
 
 
-          <button onClick={() => setRightPanelOpen(!rightPanelOpen)} className={`p-2.5 rounded-full transition-all ${rightPanelOpen ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-blue-800/20 text-orange-500'}`}><MessageCircle size={20} /></button>
+          <button id="tour-ia-assistant" onClick={() => setRightPanelOpen(!rightPanelOpen)} className={`p-2.5 rounded-full transition-all ${rightPanelOpen ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-blue-800/20 text-orange-500'}`}><MessageCircle size={20} /></button>
         </div >
       </header >
 
