@@ -17,7 +17,8 @@ export const THEME_CLASSES = {
 };
 
 
-import logoMj from './assets/logo2.png';
+import logoMj from './assets/logo.png';
 
-export const MJ_WEBSITE_URL = "#";
+export const MJ_WEBSITE_URL = "https://www.misionjuvenild5.org";
 export const MJ_LOGO_URL = logoMj;
+
