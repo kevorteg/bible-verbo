@@ -1,4 +1,4 @@
-import { callGeminiProxy, CHAT_MODEL_STANDARD, TTS_MODEL, IMAGE_MODEL } from "./geminiService";
+import { callGeminiProxy, callGeminiHeavyProxy, CHAT_MODEL_STANDARD, TTS_MODEL, IMAGE_MODEL } from "./geminiService";
 import { decodeBase64, pcmToWavBlob, audioBufferToWav } from "./audioUtils";
 import { QuizQuestion } from "../types";
 
@@ -55,7 +55,8 @@ export const generatePodcastEpisode = async (
         `;
 
         // Llamamos a Gemini (versión texto) para que escriba el guion
-        const scriptResponse = await callGeminiProxy({
+        // Usamos el proxy pesado porque el guion largo puede tardar
+        const scriptResponse = await callGeminiHeavyProxy({
             model: CHAT_MODEL_STANDARD,
             contents: [{ parts: [{ text: scriptPrompt }] }]
         });
@@ -68,7 +69,7 @@ export const generatePodcastEpisode = async (
 
         const promptTTS = `Genera un podcast en español entre Kevin y Liz:\n${script}`;
 
-        const audioResponse = await callGeminiProxy({
+        const audioResponse = await callGeminiHeavyProxy({
             model: TTS_MODEL,
             contents: [{ parts: [{ text: promptTTS }] }],
             config: {

@@ -4,7 +4,7 @@ import { getMjSystemPromptInfo } from "../mj_info";
 import { decodeBase64, decodeAudioData } from "./audioUtils";
 
 /**
- * Proxy helper function to call Gemini through Vercel Functions.
+ * Proxy helper function to call Gemini through Vercel Functions (Fast tasks).
  */
 export async function callGeminiProxy(payload: any) {
   try {
@@ -21,9 +21,50 @@ export async function callGeminiProxy(payload: any) {
         throw new Error(errorData.error || `Gemini Proxy Error: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    // Normalize response: ensure .text is available if it's a simple text response
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text && !data.text) {
+        data.text = data.candidates[0].content.parts[0].text;
+    }
+    return data;
   } catch (error) {
     console.error("Gemini Proxy Fetch Error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Proxy helper function to call Gemini through Supabase Edge Functions (Heavy tasks).
+ * This bypasses Vercel's 10s timeout.
+ */
+export async function callGeminiHeavyProxy(payload: any) {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/verbo-heavy-ai`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'apikey': supabaseAnonKey
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Heavy Proxy Error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    // Normalize response
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text && !data.text) {
+        data.text = data.candidates[0].content.parts[0].text;
+    }
+    return data;
+  } catch (error) {
+    console.error("Gemini Heavy Proxy Error:", error);
     throw error;
   }
 }
@@ -91,7 +132,9 @@ export const generateChatResponse = async (
     const toolsConfig = userLocation ? [{ googleMaps: {} }] : undefined;
     const retrievalConfig = userLocation ? { retrievalConfig: { latLng: userLocation } } : undefined;
 
-    const response = await callGeminiProxy({
+    const proxyToUse = userLocation ? callGeminiHeavyProxy : callGeminiProxy;
+
+    const response = await proxyToUse({
       model: modelToUse,
       contents: [
         { role: 'user', parts: [{ text: conversationStr }] }
@@ -164,7 +207,7 @@ export const generateSpeech = async (text: string): Promise<void> => {
       .replace(/\[CONTACTO:.*?\]/g, 'Contacto disponible en pantalla.')
       .replace(/\[NAV:.*?\]/g, '');
 
-    const response = await callGeminiProxy({
+    const response = await callGeminiHeavyProxy({
       model: TTS_MODEL,
       contents: [{ parts: [{ text: speechText }] }],
       config: {
@@ -207,7 +250,7 @@ export const generateBiblicalImage = async (verseText: string): Promise<string |
   try {
     const prompt = `Sacred biblical art: ${verseText}. Painting style, warm lighting, respectful representation.`;
 
-    const response = await callGeminiProxy({
+    const response = await callGeminiHeavyProxy({
       model: IMAGE_MODEL,
       contents: {
         parts: [{ text: prompt }]
