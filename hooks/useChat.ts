@@ -13,7 +13,8 @@ export const useChat = (
     user: User | null,
     onNavigate: (text: string) => void,
     setCurrentView: (view: 'reader' | 'dashboard' | 'map' | 'admin' | 'leaders' | 'games') => void,
-    setSidebarOpen: (open: boolean) => void
+    setSidebarOpen: (open: boolean) => void,
+    setMapMarkers: (markers: any[]) => void
 ) => {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
         { role: 'assistant', text: '¡Hola! Soy Verbo. Estoy listo para navegar la Biblia contigo.', id: 'init' }
@@ -84,9 +85,18 @@ export const useChat = (
         }
 
         // Map Data Handling
-        if (responseText.includes('<<<MAP_DATA_START>>>')) {
-            setCurrentView('map');
-            if (window.innerWidth < 1024) setSidebarOpen(false);
+        const mapMatch = responseText.match(/<<<MAP_DATA_START>>>([\s\S]*?)<<<MAP_DATA_END>>>/);
+        if (mapMatch) {
+            try {
+                const markers = JSON.parse(mapMatch[1]);
+                if (Array.isArray(markers) && markers.length > 0) {
+                    setMapMarkers(markers);
+                    setCurrentView('map');
+                    if (window.innerWidth < 1024) setSidebarOpen(false);
+                }
+            } catch (e) {
+                console.error("Error parsing map data from chat", e);
+            }
         }
 
         const cleanText = responseText.replace(/\[NAV:.+?\]/g, "").trim();

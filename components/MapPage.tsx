@@ -9,9 +9,10 @@ import { useAuth } from '../contexts/AuthContext';
 interface MapPageProps {
   theme: string;
   onOpenSidebar: () => void;
+  markers?: ChurchLocation[];
 }
 
-const MapPage: React.FC<MapPageProps> = ({ theme, onOpenSidebar }) => {
+const MapPage: React.FC<MapPageProps> = ({ theme, onOpenSidebar, markers }) => {
   const { user } = useAuth(); // Accedemos al usuario para leer/guardar ubicación
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -52,6 +53,15 @@ const MapPage: React.FC<MapPageProps> = ({ theme, onOpenSidebar }) => {
 
     return () => resizeObserver.disconnect();
   }, []);
+
+  // Sincronizar marcadores externos (desde el Chat)
+  useEffect(() => {
+    if (markers && markers.length > 0) {
+        setLocations(markers);
+        setSearchStatus(`${markers.length} congregaciones halladas.`);
+        setShowList(true);
+    }
+  }, [markers]);
 
   // Lógica de Auto-Carga de Ubicación Guardada
   useEffect(() => {

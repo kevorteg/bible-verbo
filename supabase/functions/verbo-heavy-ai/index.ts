@@ -18,24 +18,20 @@ serve(async (req) => {
 
     const { model, contents, config, tools, toolConfig } = await req.json()
 
-    // Note: The rest API Uses generationConfig instead of config for some parameters
-    // We'll normalize the request for the Google API
     const googleApiRequest = {
-      contents: contents,
-      tools: tools,
-      toolConfig: toolConfig,
+      contents,
+      tools,
+      toolConfig,
       generationConfig: config || {},
-      systemInstruction: config?.systemInstruction 
+      systemInstruction: config?.systemInstruction,
     }
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`
 
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(googleApiRequest)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(googleApiRequest),
     })
 
     const data = await response.json()
@@ -44,6 +40,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
+
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

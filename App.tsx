@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart } from 'lucide-react';
-import { Bookmark as BookmarkType, NoteMap } from './types';
+import { Bookmark as BookmarkType, NoteMap, ChurchLocation } from './types';
 import * as UserService from './services/userService';
 import Sidebar from './components/Sidebar';
 import Reader from './components/Reader';
@@ -45,6 +45,7 @@ const AppContent = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDailyPromise, setShowDailyPromise] = useState(false);
   const [startTour, setStartTour] = useState(false);
+  const [mapMarkers, setMapMarkers] = useState<ChurchLocation[]>([]);
 
   useEffect(() => {
     // Guard: StrictMode runs effects twice in dev, this prevents double-fire
@@ -141,7 +142,7 @@ const AppContent = () => {
     }
   };
 
-  const chat = useChat(user, detectAndNavigate, setCurrentView, setSidebarOpen);
+  const chat = useChat(user, detectAndNavigate, setCurrentView, setSidebarOpen, setMapMarkers);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
@@ -256,6 +257,7 @@ const AppContent = () => {
           <MapPage
             theme={theme}
             onOpenSidebar={() => setSidebarOpen(true)}
+            markers={mapMarkers}
           />
         </div>
       );
