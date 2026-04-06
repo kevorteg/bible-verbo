@@ -7,6 +7,9 @@ import { ChatMessage, Verse, Bookmark, NoteMap, Book as IBook, Chapter, QuizQues
 import { TriviaRecommendation } from '../services/aiFeatures';
 import confetti from 'canvas-confetti';
 
+import { MJ_WEBSITE_URL } from '../constants';
+import { Globe } from 'lucide-react';
+
 interface RightPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -618,9 +621,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
               <button onClick={() => onSendMessage("Necesito ayuda, me siento solo/a y triste.")} className={`px-3 py-1.5 rounded-full border text-[9px] font-bold transition-all whitespace-nowrap bg-red-900/10 border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white flex items-center gap-1`}>
                 <HeartHandshake size={10} /> Necesito Ayuda
               </button>
-              {/* BOTÓN ACTUALIZADO PARA REDIRIGIR A LA PÁGINA MAPA */}
-              <button onClick={onNavigateToMapPage} className={`px-3 py-1.5 rounded-full border text-[9px] font-bold transition-all whitespace-nowrap flex items-center gap-1 ${theme === 'dark' ? 'bg-blue-900/30 border-blue-800/40 text-blue-300 hover:bg-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'}`}>
-                <MapPin size={10} /> Ubicar IPUC
+              {/* BOTÓN ACTUALIZADO PARA REDIRIGIR A LA WEB DE MJ */}
+              <button onClick={() => window.open(MJ_WEBSITE_URL, '_blank')} className={`px-3 py-1.5 rounded-full border text-[9px] font-bold transition-all whitespace-nowrap flex items-center gap-1 ${theme === 'dark' ? 'bg-blue-900/30 border-blue-800/40 text-blue-300 hover:bg-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'}`}>
+                <Globe size={10} /> Visitar Web
               </button>
               <button onClick={() => onSendMessage("Regálame un devocional diario corto para hoy.")} className="px-3 py-1.5 rounded-full border text-[9px] font-bold transition-all whitespace-nowrap bg-orange-600/10 border-orange-600/30 text-orange-600 dark:text-orange-500 hover:bg-orange-600 hover:text-white flex items-center gap-1"><Sunrise size={10} /> Devocional</button>
               <button onClick={() => onSendMessage("Historia MJ")} className={`px-3 py-1.5 rounded-full border text-[9px] font-bold transition-all whitespace-nowrap ${theme === 'dark' ? 'bg-blue-900/30 border-blue-800/40 text-neutral-400 hover:border-orange-500' : (theme === 'sepia' ? 'bg-[#eaddcf] border-[#d3c4b1] text-[#8c735a] hover:border-orange-500' : 'bg-neutral-100 border-neutral-200 text-neutral-500 hover:border-orange-500')}`}>Historia MJ</button>
