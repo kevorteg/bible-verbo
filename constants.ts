@@ -15,7 +15,7 @@ export const THEME_CLASSES = {
 };
 
 
-import logoVerbo from './assets/verbo_logo.png';
+import logoVerbo from './assets/logo.png';
 
 export const MJ_WEBSITE_URL = "https://www.misionjuvenild5.org";
 export const MJ_LOGO_URL = logoVerbo;

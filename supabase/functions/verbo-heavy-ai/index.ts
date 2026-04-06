@@ -16,14 +16,15 @@ serve(async (req) => {
       throw new Error("Missing GEMINI_API_KEY environment variable")
     }
 
-    const { model, contents, config } = await req.json()
+    const { model, contents, config, tools, toolConfig } = await req.json()
 
     // Note: The rest API Uses generationConfig instead of config for some parameters
     // We'll normalize the request for the Google API
     const googleApiRequest = {
       contents: contents,
+      tools: tools,
+      toolConfig: toolConfig,
       generationConfig: config || {},
-      // In some versions systems instruction is a separate field
       systemInstruction: config?.systemInstruction 
     }
 
