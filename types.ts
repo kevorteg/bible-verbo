@@ -112,3 +112,14 @@ export interface Achievement {
   dateUnlocked: string;
   type: 'expert' | 'troll' | 'honor';
 }
+
+export interface Sermon {
+  id: string;
+  title: string;
+  preacher: string;
+  date: string;
+  thumbnail: string;
+  videoUrl: string;
+  category: string;
+  duration: string;
+}

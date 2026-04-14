@@ -21,13 +21,14 @@ import * as GeminiService from './services/geminiService'; // For direct calls i
 import { GamesPage } from './components/GamesPage';
 import { DailyPromiseModal } from './components/DailyPromiseModal';
 import { TourGuide } from './components/TourGuide';
+import { SermonsPage } from './components/SermonsPage';
 
 // Wraps the main content to provide auth context cleanly
 const AppContent = () => {
   const { user, updateStats } = useAuth();
 
   const [theme, setTheme] = useState<'dark' | 'light' | 'sepia'>('dark');
-  const [currentView, setCurrentView] = useState<'reader' | 'dashboard' | 'map' | 'admin' | 'leaders' | 'games'>('reader');
+  const [currentView, setCurrentView] = useState<'reader' | 'dashboard' | 'map' | 'admin' | 'leaders' | 'games' | 'sermons'>('reader');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -291,6 +292,15 @@ const AppContent = () => {
       );
     }
 
+    if (currentView === 'sermons') {
+      return (
+        <SermonsPage
+          onBack={() => setCurrentView('reader')}
+          theme={theme}
+        />
+      );
+    }
+
     return (
       <Reader
         currentBook={currentBook}
@@ -416,6 +426,10 @@ const AppContent = () => {
         }}
         onNavigateToGames={() => {
           setCurrentView('games');
+          if (window.innerWidth < 1024) setSidebarOpen(false);
+        }}
+        onNavigateToSermons={() => {
+          setCurrentView('sermons');
           if (window.innerWidth < 1024) setSidebarOpen(false);
         }}
         currentView={currentView}
