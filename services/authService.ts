@@ -76,6 +76,31 @@ export const verifyEmailOtp = async (email: string, token: string): Promise<User
     return await fetchProfileAndReturnUser(data.user);
 };
 
+// Enviar código de restablecimiento de contraseña
+export const sendPasswordResetOtp = async (email: string): Promise<void> => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}`, // Necesario para que Supabase genere token OTP válido
+    });
+    if (error) throw new Error(error.message);
+};
+
+// Verificar código OTP de recovery
+export const verifyRecoveryOtp = async (email: string, token: string): Promise<void> => {
+    // Intentar con type 'recovery' primero, luego con 'email' como respaldo
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'recovery' });
+    if (error) {
+        const { error: error2 } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+        if (error2) throw new Error("Código incorrecto o expirado.");
+    }
+};
+
+// Actualizar la contraseña (requiere sesión activa, llamar después de verifyRecoveryOtp)
+export const updatePassword = async (newPassword: string): Promise<void> => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+};
+
+
 // Helper interno
 const fetchProfileAndReturnUser = async (authUser: any): Promise<User> => {
     const { data: profile, error: profileError } = await supabase

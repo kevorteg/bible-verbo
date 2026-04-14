@@ -4,10 +4,10 @@ import { Play, Search, Video, Mic, Calendar, User, ArrowLeft, Filter, Music } fr
 import { motion, AnimatePresence } from 'framer-motion';
 import { SermonPlayer } from './SermonPlayer.tsx';
 import { Sermon } from '../types';
-
-import SERMONS_DATA from '../data/sermons.json';
-
-const SERMONS = SERMONS_DATA as Sermon[];
+import { supabase } from '../services/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
+import { AdminSermonPanel } from './AdminSermonPanel';
+import { Plus } from 'lucide-react';
 
 interface SermonsPageProps {
   onBack: () => void;
@@ -18,8 +18,40 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onBack, theme }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [activeSermon, setActiveSermon] = useState<Sermon | null>(null);
+  const [sermons, setSermons] = useState<Sermon[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const { user } = useAuth();
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
-  const filteredSermons = SERMONS.filter(s => {
+  const fetchSermons = async () => {
+    try {
+      setLoading(true);
+      // Explicitly sort by created_at ascending (or descending for newest first)
+      const { data, error } = await supabase.from('sermons').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+
+      // Map videourl back to videoUrl if necessary depending on how the type defines it
+      // The type Sermon uses videoUrl.
+      const formattedData = data ? data.map((item: any) => ({
+        ...item,
+        id: item.video_id || item.videourl.split('v=')[1], // Fallback if video_id missing
+        videoUrl: item.videoUrl || item.videourl, // Handle Postgres lowercase conversion
+      })) : [];
+
+      setSermons(formattedData);
+    } catch (error) {
+      console.error('Error fetching sermons:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchSermons();
+  }, []);
+
+  const filteredSermons = sermons.filter(s => {
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           s.preacher.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'Todos' || s.category?.normalize() === selectedCategory.normalize();
@@ -87,7 +119,12 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onBack, theme }) => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
-        {filteredSermons.length === 0 ? (
+        {loading ? (
+          <div className="h-full flex flex-col items-center justify-center text-center">
+            <div className="w-10 h-10 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin mb-4"></div>
+            <p className={`${textMuted} text-sm font-medium animate-pulse`}>Cargando catálogo...</p>
+          </div>
+        ) : filteredSermons.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-80 min-h-[50vh]">
             <Filter size={64} className="mb-4 text-orange-500" />
             <h3 className={`text-xl font-bold ${textTitle} mb-2`}>No encontramos resultados en la aplicación</h3>
@@ -196,6 +233,28 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onBack, theme }) => {
           />
         )}
       </AnimatePresence>
+
+      {/* Admin Floating Action Button */}
+      {user && (
+        <button
+          onClick={() => setShowAdminPanel(true)}
+          className="absolute bottom-6 right-6 lg:bottom-10 lg:right-10 w-14 h-14 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-orange-600/30 border border-orange-400/20 transition-all hover:scale-110 z-50 group"
+          title="Añadir nuevo video"
+        >
+          <Plus size={28} className="group-hover:rotate-90 transition-transform duration-300" />
+        </button>
+      )}
+
+      {/* Admin Panel Modal */}
+      {showAdminPanel && (
+        <AdminSermonPanel 
+          onClose={() => setShowAdminPanel(false)}
+          onSuccess={() => {
+            setShowAdminPanel(false);
+            fetchSermons();
+          }}
+        />
+      )}
     </div>
   );
 };
