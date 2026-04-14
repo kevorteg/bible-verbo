@@ -78,8 +78,10 @@ export const verifyEmailOtp = async (email: string, token: string): Promise<User
 
 // Enviar código de restablecimiento de contraseña
 export const sendPasswordResetOtp = async (email: string): Promise<void> => {
+    // Siempre redirigir a producción para que el link del correo funcione correctamente
+    const siteUrl = 'https://bible-verbo.vercel.app';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}`, // Necesario para que Supabase genere token OTP válido
+        redirectTo: siteUrl,
     });
     if (error) throw new Error(error.message);
 };
