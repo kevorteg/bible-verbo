@@ -22,7 +22,7 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onBack, theme }) => {
   const filteredSermons = SERMONS.filter(s => {
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           s.preacher.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'Todos' || s.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'Todos' || s.category?.normalize() === selectedCategory.normalize();
     return matchesSearch && matchesCategory;
   });
 
@@ -142,9 +142,12 @@ export const SermonsPage: React.FC<SermonsPageProps> = ({ onBack, theme }) => {
                 {/* Content */}
                 <div className="p-5 lg:p-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="px-2 py-0.5 rounded-lg bg-orange-500/10 text-[9px] font-black uppercase text-orange-500 border border-orange-500/20">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setSelectedCategory(sermon.category); }}
+                      className="px-2 py-0.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-[9px] font-black uppercase text-orange-500 border border-orange-500/20 transition-colors"
+                    >
                       {sermon.category}
-                    </span>
+                    </button>
                     <div className="flex items-center gap-1 text-[10px] text-neutral-500">
                       <Calendar size={12} />
                       {sermon.date}
