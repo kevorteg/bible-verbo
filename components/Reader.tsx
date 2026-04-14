@@ -270,14 +270,14 @@ const Reader: React.FC<ReaderProps> = ({
 
   return (
     <main className={`flex-1 flex flex-col relative overflow-hidden bg-pattern transition-colors duration-300 ${theme === 'sepia' ? 'bg-[#f4ecd8]' : ''}`}>
-      <header className={`h-16 flex items-center justify-between px-4 lg:px-6 border-b z-10 backdrop-blur-md ${theme === 'dark' ? 'bg-[#0a192f]/95 border-blue-900/30' : (theme === 'sepia' ? 'bg-[#f4ecd8]/95 border-[#e2d5b6]' : 'bg-white/95 border-neutral-200')}`}>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2.5 rounded-xl transition-colors hover:bg-blue-800/20 text-orange-500">
+      <header className={`h-16 flex items-center justify-between px-2 xs:px-4 lg:px-6 border-b z-10 backdrop-blur-md ${theme === 'dark' ? 'bg-[#0a192f]/95 border-blue-900/30' : (theme === 'sepia' ? 'bg-[#f4ecd8]/95 border-[#e2d5b6]' : 'bg-white/95 border-neutral-200')}`}>
+        <div className="flex items-center gap-1.5 xs:gap-3">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 xs:p-2.5 rounded-xl transition-colors hover:bg-blue-800/20 text-orange-500">
             <Menu size={20} />
           </button>
 
-          <div className={`flex items-center gap-3 border-l pl-3 ml-1 ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
-            <span className="text-sm lg:text-base font-black uppercase tracking-widest text-orange-500 truncate max-w-[120px] sm:max-w-none">
+          <div className={`flex items-center gap-1.5 xs:gap-3 border-l pl-2 xs:pl-3 ml-0.5 xs:ml-1 ${theme === 'dark' ? 'border-white/10' : 'border-black/10'}`}>
+            <span className="text-xs sm:text-sm lg:text-base font-black uppercase tracking-widest text-orange-500 truncate max-w-[80px] xs:max-w-[120px] sm:max-w-none">
               {currentBook?.name || "..."}
             </span>
 
@@ -287,7 +287,8 @@ const Reader: React.FC<ReaderProps> = ({
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'bg-blue-900/30 border-blue-800/50 text-neutral-300 hover:border-orange-500 hover:text-white' : (theme === 'sepia' ? 'bg-[#eaddcf] border-[#d3c4b1] text-[#5b4636] hover:border-orange-500' : 'bg-neutral-100 border-neutral-300 text-neutral-700 hover:border-orange-500 hover:text-orange-600')}`}
               >
                 <Grid size={13} className={theme === 'dark' ? "text-orange-500" : "text-orange-600"} />
-                <span>Cap. {currentChapter?.number || "-"}</span>
+                <span className="hidden xs:inline">Cap. </span>
+                <span>{currentChapter?.number || "-"}</span>
                 <ChevronDown size={11} className="opacity-50" />
                 {currentIsRead && <CheckCircle2 size={12} className="text-green-500" />}
               </button>
@@ -325,11 +326,11 @@ const Reader: React.FC<ReaderProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 xs:gap-2">
           <div className="relative">
             <button
               onClick={() => setShowAppearanceMenu(!showAppearanceMenu)}
-              className={`p-2.5 rounded-full transition-all ${showAppearanceMenu ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-blue-800/20 text-orange-500'}`}
+              className={`p-2 xs:p-2.5 rounded-full transition-all ${showAppearanceMenu ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-blue-800/20 text-orange-500'}`}
             >
               <Type size={20} />
             </button>
@@ -386,7 +387,7 @@ const Reader: React.FC<ReaderProps> = ({
               id="tour-generador-podcast"
               onClick={openPodcastModal}
               disabled={generatingPodcast}
-              className={`p-2.5 rounded-full transition-all ${generatingPodcast ? 'animate-pulse text-orange-500 bg-orange-100' : 'hover:bg-blue-800/20 text-orange-500'}`}
+              className={`p-2 xs:p-2.5 rounded-full transition-all ${generatingPodcast ? 'animate-pulse text-orange-500 bg-orange-100' : 'hover:bg-blue-800/20 text-orange-500'}`}
               title="Crear Podcast VerboCast"
             >
               {generatingPodcast ? <Loader2 size={20} className="animate-spin" /> : <Headphones size={20} />}
@@ -505,7 +506,7 @@ const Reader: React.FC<ReaderProps> = ({
 
 
 
-          <button id="tour-ia-assistant" onClick={() => setRightPanelOpen(!rightPanelOpen)} className={`p-2.5 rounded-full transition-all ${rightPanelOpen ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-blue-800/20 text-orange-500'}`}><MessageCircle size={20} /></button>
+          <button id="tour-ia-assistant" onClick={() => setRightPanelOpen(!rightPanelOpen)} className={`p-2 xs:p-2.5 rounded-full transition-all ${rightPanelOpen ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-blue-800/20 text-orange-500'}`}><MessageCircle size={20} /></button>
         </div >
       </header >
 
@@ -540,7 +541,7 @@ const Reader: React.FC<ReaderProps> = ({
                     key={v.id}
                     id={`verse-${v.number}`}
                     ref={el => { verseRefs.current[v.number] = el; }}
-                    className={`group flex gap-3 p-4 rounded-xl transition-all cursor-pointer relative duration-500
+                    className={`group flex gap-3 p-4 rounded-xl transition-all cursor-pointer relative duration-200 active:scale-[0.98] active:bg-orange-600/20
                       ${isHighlighted
                         ? 'bg-[#1a2d4d] border-l-4 border-orange-500 shadow-2xl scale-[1.02] z-10 my-4'
                         : (isSelected ? 'bg-orange-600/10 border-l-4 border-orange-600/50' : 'hover:bg-blue-800/10 border-l-4 border-transparent')

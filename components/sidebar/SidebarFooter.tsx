@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, LogIn, LayoutDashboard, Map, Heart, Shield, Users, BadgeCheck } from 'lucide-react';
+import { Globe, LogIn, LayoutDashboard, Map, Heart, Shield, Users, BadgeCheck, Play } from 'lucide-react';
 import { MJ_WEBSITE_URL } from '../../constants';
 import { User } from '../../types';
 
@@ -12,6 +12,7 @@ interface SidebarFooterProps {
     onNavigateToMap: () => void;
     onNavigateToLeaders: () => void;
     onNavigateToGames: () => void;
+    onNavigateToSermons: () => void;
     currentView: string;
     theme: string;
     textClasses: string;
@@ -19,7 +20,7 @@ interface SidebarFooterProps {
 }
 
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({
-    isAdminOrLeader, onNavigateToAdmin, user, onNavigateToProfile, onOpenAuth, onNavigateToMap, onNavigateToLeaders, onNavigateToGames, currentView, theme, textClasses, onLogout
+    isAdminOrLeader, onNavigateToAdmin, user, onNavigateToProfile, onOpenAuth, onNavigateToMap, onNavigateToLeaders, onNavigateToGames, onNavigateToSermons, currentView, theme, textClasses, onLogout
 }) => {
     return (
         <div className={`p-4 border-t shrink-0 space-y-3 ${theme === 'dark' ? 'border-blue-900/30' : (theme === 'sepia' ? 'border-[#e2d5b6]' : 'border-neutral-200')}`}>
@@ -62,6 +63,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                     <Globe size={14} /> Arcade
                 </button>
             </div>
+
+            <button onClick={onNavigateToSermons} className={`w-full p-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition-all text-[11px] font-black uppercase border border-transparent ${currentView === 'sermons' ? 'bg-orange-600 text-white shadow-orange-500/20' : (theme === 'dark' ? 'bg-blue-900/20 text-orange-500 hover:bg-[#1a2d4d]' : 'bg-neutral-100 text-orange-600 hover:bg-white')}`}>
+                <Play size={14} className="fill-current" /> Prédicas
+            </button>
         </div>
     );
 };
