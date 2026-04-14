@@ -218,5 +218,45 @@
     "videoUrl": "https://www.youtube.com/watch?v=VgiTdpqul_A",
     "category": "Bautismo",
     "duration": "50:12"
+  },
+  {
+    "id": "sTthSsMuZpY",
+    "title": "EL VALOR DEL COMPROMISO",
+    "preacher": "Pr. Wilson Rojas",
+    "date": "2024-01-20",
+    "thumbnail": "https://img.youtube.com/vi/sTthSsMuZpY/hqdefault.jpg",
+    "videoUrl": "https://www.youtube.com/watch?v=sTthSsMuZpY",
+    "category": "Caminar con Dios",
+    "duration": "48:15"
+  },
+  {
+    "id": "q3WQ9nk7ZhU",
+    "title": "DIOS PROVEERÁ (MAYORDOMÍA)",
+    "preacher": "Pr. Wilson Rojas",
+    "date": "2023-10-18",
+    "thumbnail": "https://img.youtube.com/vi/q3WQ9nk7ZhU/hqdefault.jpg",
+    "videoUrl": "https://www.youtube.com/watch?v=q3WQ9nk7ZhU",
+    "category": "Mayordomía",
+    "duration": "52:10"
+  },
+  {
+    "id": "Vh3Kiy9uPQE",
+    "title": "EL PODER DEL ARREPENTIMIENTO",
+    "preacher": "Pr. Jhon Fabio García",
+    "date": "2024-02-12",
+    "thumbnail": "https://img.youtube.com/vi/Vh3Kiy9uPQE/hqdefault.jpg",
+    "videoUrl": "https://www.youtube.com/watch?v=Vh3Kiy9uPQE",
+    "category": "Arrepentimiento",
+    "duration": "55:30"
+  },
+  {
+    "id": "WDxXSOeTdFM",
+    "title": "LA IMPORTANCIA DE LA FE",
+    "preacher": "Pr. Jhon Fabio García",
+    "date": "2023-09-05",
+    "thumbnail": "https://img.youtube.com/vi/WDxXSOeTdFM/hqdefault.jpg",
+    "videoUrl": "https://www.youtube.com/watch?v=WDxXSOeTdFM",
+    "category": "Fe",
+    "duration": "49:22"
   }
 ]
