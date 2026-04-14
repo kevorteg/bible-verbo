@@ -4,12 +4,14 @@ import {
     LayoutDashboard, Users, Shield, LogOut, Search, Bell,
     ChevronDown, MoreHorizontal, ArrowUpRight, ArrowDownRight,
     Menu, X, Lock, Eye, KeyRound, AlertTriangle, FileText, CheckCircle2,
-    Download, MessageSquare, Trash2, Heart
+    Download, MessageSquare, Trash2, Heart, Video, Plus, Edit2
 } from 'lucide-react';
-import { User, PrayerRequest } from '../types';
+import { User, PrayerRequest, Sermon } from '../types';
 import * as UserService from '../services/userService';
 import * as PrayerService from '../services/prayerService';
 import { decryptData } from '../services/encryptionService';
+import { supabase } from '../services/supabaseClient';
+import { AdminSermonPanel } from './AdminSermonPanel';
 
 interface AdminDashboardProps {
     currentUser: User;
@@ -54,12 +56,16 @@ const StatCard = ({ title, value, subtext, trend, trendValue, color, chartData }
 );
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onBack }) => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'safety' | 'community'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'safety' | 'community' | 'sermons'>('overview');
     const [users, setUsers] = useState<User[]>([]);
     const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
+    const [sermons, setSermons] = useState<Sermon[]>([]);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(true); // Desktop default
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // Sermons states
+    const [showSermonPanel, setShowSermonPanel] = useState(false);
 
     // Safety Logic
     const [selectedUserChat, setSelectedUserChat] = useState<User | null>(null);
@@ -78,12 +84,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onBack }) 
     const loadData = async () => {
         setLoading(true);
         try {
-            const [allUsers, allPrayers] = await Promise.all([
+            const [allUsers, allPrayers, allSermonsData] = await Promise.all([
                 UserService.getAllUsers(),
-                isAdmin ? PrayerService.getAllPrayersForAdmin() : Promise.resolve([])
+                isAdmin ? PrayerService.getAllPrayersForAdmin() : Promise.resolve([]),
+                isAdmin ? supabase.from('sermons').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] })
             ]);
             setUsers(allUsers);
             setPrayers(allPrayers);
+            
+            if (allSermonsData.data) {
+                const formattedSermons = allSermonsData.data.map((item: any) => ({
+                  ...item,
+                  db_id: item.id, // Store real Postgres ID for correct deletion!
+                  id: item.video_id || item.videourl?.split('v=')[1],
+                  videoUrl: item.videoUrl || item.videourl,
+                }));
+                setSermons(formattedSermons);
+            }
         } catch (e) {
             console.error("Error loading admin data", e);
         } finally {
@@ -142,6 +159,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onBack }) 
             await PrayerService.deletePrayer(id);
             setPrayers(prayers.filter(p => p.id !== id));
         } catch (e) { alert("Error al borrar"); }
+    };
+
+    const handleDeleteSermon = async (sermon: any) => {
+        if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente el video "${sermon.title}"?`)) return;
+        try {
+            // Priority: delete by db_id, fallback to video_id
+            const query = sermon.db_id 
+                ? supabase.from('sermons').delete().eq('id', sermon.db_id)
+                : supabase.from('sermons').delete().eq('video_id', sermon.video_id || sermon.id);
+                
+            const { error } = await query;
+            if (error) throw error;
+            
+            setSermons(sermons.filter(s => s.id !== sermon.id));
+        } catch (e) {
+            alert("Error al eliminar la prédica");
+        }
+    };
+
+
+    const handleEditSermon = async (sermon: any) => {
+        const newPreacher = prompt("Editar Nombre del Pastor:", sermon.preacher);
+        if (newPreacher === null) return;
+        
+        const newCategory = prompt("Editar Categoría:", sermon.category);
+        if (newCategory === null) return;
+        
+        if (newPreacher === sermon.preacher && newCategory === sermon.category) return;
+        
+        try {
+            const query = sermon.db_id 
+                ? supabase.from('sermons').update({ preacher: newPreacher, category: newCategory }).eq('id', sermon.db_id)
+                : supabase.from('sermons').update({ preacher: newPreacher, category: newCategory }).eq('video_id', sermon.video_id || sermon.id);
+            
+            const { error } = await query;
+            if (error) throw error;
+            
+            setSermons(sermons.map(s => s.id === sermon.id ? { ...s, preacher: newPreacher, category: newCategory } : s));
+        } catch (e) {
+            alert("Error al actualizar la prédica");
+        }
     };
 
     const handleExportCSV = () => {
@@ -247,6 +305,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onBack }) 
                                 {sidebarOpen && <span className="font-medium text-sm">Seguridad</span>}
                             </button>
                         </>
+                    )}
+                    
+                    {isAdmin && (
+                        <button
+                            onClick={() => setActiveTab('sermons')}
+                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${activeTab === 'sermons' ? 'bg-gradient-to-r from-teal-600 to-teal-500 text-white shadow-lg shadow-teal-900/20' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+                        >
+                            <Video size={20} />
+                            {sidebarOpen && <span className="font-medium text-sm">Prédicas</span>}
+                        </button>
                     )}
 
                     <div className="mt-8 text-[10px] font-bold uppercase text-neutral-500 px-3 mb-2 tracking-wider">Sistema</div>
@@ -576,6 +644,83 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onBack }) 
                         </div>
                     )}
 
+                    {/* VISTA PRÉDICAS (NUEVA) */}
+                    {activeTab === 'sermons' && isAdmin && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden animate-in fade-in">
+                            <div className="p-6 border-b border-neutral-100 flex justify-between items-center">
+                                <h2 className="font-bold text-lg flex items-center gap-2"><Video size={18} /> Gestor de Prédicas</h2>
+                                <button 
+                                    onClick={() => setShowSermonPanel(true)}
+                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-bold hover:bg-orange-700 transition-colors shadow-lg shadow-orange-600/20 flex items-center gap-2"
+                                >
+                                    <Plus size={14} /> Añadir Prédica
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-neutral-50 text-neutral-500 uppercase font-bold text-xs">
+                                        <tr>
+                                            <th className="px-6 py-4">Video</th>
+                                            <th className="px-6 py-4">Pastor</th>
+                                            <th className="px-6 py-4">Categoría</th>
+                                            <th className="px-6 py-4">Fecha Subida</th>
+                                            <th className="px-6 py-4 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-neutral-100">
+                                        {sermons.map((s: any) => (
+                                            <tr key={s.id} className="hover:bg-neutral-50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <img src={s.thumbnail} alt="thumb" className="w-16 h-9 object-cover rounded-md" />
+                                                        <div className="w-64">
+                                                            <p className="font-bold text-neutral-800 line-clamp-1" title={s.title}>{s.title}</p>
+                                                            <p className="text-[10px] text-neutral-400 font-mono">ID: {s.video_id || s.id}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="font-medium text-neutral-700">{s.preacher}</span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="px-2 py-1 bg-orange-50 text-orange-600 rounded text-[10px] uppercase font-bold border border-orange-100">{s.category}</span>
+                                                </td>
+                                                <td className="px-6 py-4 text-xs text-neutral-500 font-mono">
+                                                    {s.date || new Date().toISOString().split('T')[0]}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleEditSermon(s)}
+                                                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Editar Datos"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteSermon(s)}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Borrar Prédica (Irreversible)"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {sermons.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-12 text-center text-neutral-400">
+                                                    No hay prédicas encontradas.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {/* VISTA SAFETY */}
                     {activeTab === 'safety' && isAdmin && (
                         <div className="flex flex-col xl:flex-row gap-6 h-[calc(100vh-140px)]">
@@ -659,6 +804,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onBack }) 
 
                 </div>
             </main>
+
+            {/* Modal de Agregar Sermón */}
+            {showSermonPanel && (
+                <AdminSermonPanel 
+                  onClose={() => setShowSermonPanel(false)}
+                  onSuccess={() => {
+                      setShowSermonPanel(false);
+                      loadData(); // recargar al insertar
+                  }}
+                />
+            )}
         </div>
     );
 };
