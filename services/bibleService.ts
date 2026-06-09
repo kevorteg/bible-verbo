@@ -40,6 +40,28 @@ export const fetchChapters = async (bibleId: string, bookId: string): Promise<Ch
   }
 };
 
+export interface AudioInfo {
+  url: string;
+  duration: number;
+  mimeType: string;
+}
+
+export const fetchChapterAudio = async (bibleId: string, chapterId: string): Promise<AudioInfo | null> => {
+  try {
+    const data: any = await getFromApi(`/${bibleId}/chapters/${chapterId}/audio`);
+    if (data?.data?.audio?.url) {
+      return {
+        url: data.data.audio.url,
+        duration: data.data.audio.duration || 0,
+        mimeType: data.data.audio.mimeType || 'audio/mpeg',
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 export const fetchChapterContent = async (bibleId: string, chapterId: string): Promise<Verse[]> => {
   try {
     const endpoint = `/${bibleId}/chapters/${chapterId}?content-type=json&include-notes=false&include-titles=false`;

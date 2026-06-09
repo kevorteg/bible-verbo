@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { QuizQuestion, Book, Chapter, Verse } from '../types';
-import { generateChapterQuiz, TriviaRecommendation, generateTriviaRecommendations, TriviaResult } from '../services/aiFeatures';
+import { generateChapterQuiz } from '../services/geminiService';
+import { TriviaRecommendation, generateTriviaRecommendations, TriviaResult } from '../services/aiFeatures';
 import { useAchievements } from './useAchievements';
 import { Achievement } from '../types';
 

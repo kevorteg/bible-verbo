@@ -1,4 +1,5 @@
 {
+  "exclude": ["supabase/functions/verbo-heavy-ai"],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
@@ -9,6 +10,7 @@
       "DOM",
       "DOM.Iterable"
     ],
+    "strict": true,
     "skipLibCheck": true,
     "types": [
       "node"

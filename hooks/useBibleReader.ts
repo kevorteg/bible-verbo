@@ -3,6 +3,7 @@ import { Book, Chapter, Verse, ReadProgressMap } from '../types';
 import * as BibleService from '../services/bibleService';
 import { DEFAULT_BIBLE_ID } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
+import { getAndClearPendingChapter, getAndClearPendingVerse, setPendingChapter } from '../services/navigation';
 
 export const useBibleReader = (showToast: (msg: string) => void) => {
     const { user, updateStats, checkInDaily } = useAuth();
@@ -45,11 +46,10 @@ export const useBibleReader = (showToast: (msg: string) => void) => {
                 const chapters = await BibleService.fetchChapters(bibleId, currentBook.id);
                 setChaptersList(chapters);
 
-                // Manejo de navegación pendiente (deep linking)
-                if ((window as any)._pendingChapter) {
-                    const target = chapters.find(c => parseInt(c.number) === (window as any)._pendingChapter) || chapters[0];
+                const pendingChapter = getAndClearPendingChapter();
+                if (pendingChapter) {
+                    const target = chapters.find(c => parseInt(c.number) === pendingChapter) || chapters[0];
                     setCurrentChapter(target);
-                    delete (window as any)._pendingChapter;
                 } else if (!currentChapter || currentChapter.bookId !== currentBook.id) {
                     setCurrentChapter(chapters[0]);
                 }
@@ -70,10 +70,9 @@ export const useBibleReader = (showToast: (msg: string) => void) => {
                 const content = await BibleService.fetchChapterContent(bibleId, currentChapter.id);
                 setVerses(content);
 
-                // Manejo de highlight pendiente
-                if ((window as any)._pendingVerse) {
-                    setHighlightedVerseId(String((window as any)._pendingVerse));
-                    delete (window as any)._pendingVerse;
+                const pendingVerse = getAndClearPendingVerse();
+                if (pendingVerse) {
+                    setHighlightedVerseId(pendingVerse);
                 } else {
                     setHighlightedVerseId(null);
                 }
@@ -96,7 +95,7 @@ export const useBibleReader = (showToast: (msg: string) => void) => {
             const bookIdx = apiBooks.findIndex(b => b.id === currentBook?.id);
             if (bookIdx < apiBooks.length - 1) {
                 setCurrentBook(apiBooks[bookIdx + 1]);
-                (window as any)._pendingChapter = 1;
+                setPendingChapter(1);
             }
         }
     };

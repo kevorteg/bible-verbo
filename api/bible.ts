@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const API_BIBLE_KEY = process.env.VITE_API_BIBLE_KEY || process.env.API_BIBLE_KEY || "";
+const API_BIBLE_KEY = process.env.API_BIBLE_KEY || process.env.VITE_API_BIBLE_KEY;
 const BASE_URL = 'https://rest.api.bible/v1/bibles';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -29,9 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const response = await fetch(fullUrl, {
-      headers: {
-        "api-key": API_BIBLE_KEY
-      }
+      headers: { "api-key": API_BIBLE_KEY } as HeadersInit
     });
 
     if (!response.ok) {

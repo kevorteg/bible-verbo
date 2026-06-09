@@ -2,6 +2,7 @@
 import { ChatMessage, QuizQuestion } from "../types";
 import { getMjSystemPromptInfo } from "../mj_info";
 import { decodeBase64, decodeAudioData } from "./audioUtils";
+import { supabase } from "./supabaseClient";
 
 /**
  * Proxy helper function to call Gemini through Vercel Functions (Fast tasks).
@@ -40,14 +41,14 @@ export async function callGeminiProxy(payload: any) {
 export async function callGeminiHeavyProxy(payload: any) {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || '';
     
     const response = await fetch(`${supabaseUrl}/functions/v1/verbo-heavy-ai`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'apikey': supabaseAnonKey
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload)
     });

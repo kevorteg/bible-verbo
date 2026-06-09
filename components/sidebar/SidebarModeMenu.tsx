@@ -22,7 +22,7 @@ export const SidebarModeMenu: React.FC<SidebarModeMenuProps> = ({ currentView, o
             <div className={`p-6 rounded-2xl text-center ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-neutral-100'}`}>
                 <p className={`text-xs uppercase font-black tracking-widest mb-2 opacity-50 ${textClasses}`}>Modo Actual</p>
                 <h2 className="text-xl font-black text-orange-500 uppercase">
-                    {currentView === 'community' ? 'Comunidad' : (currentView === 'map' ? 'Web' : (currentView === 'admin' ? 'Admin Panel' : 'Perfil'))}
+                    {currentView === 'community' ? 'Comunidad' : (currentView === 'map' ? 'Web' : (currentView === 'admin' ? 'Admin Panel' : (currentView === 'plans' ? 'Planes de Lectura' : 'Perfil')))}
                 </h2>
             </div>
         </div>

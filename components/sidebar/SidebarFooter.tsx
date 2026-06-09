@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, LogIn, LayoutDashboard, Map, Heart, Shield, Users, BadgeCheck, Play } from 'lucide-react';
+import { Globe, LogIn, LayoutDashboard, Map, Heart, Shield, Users, BadgeCheck, Play, BookOpen } from 'lucide-react';
 import { MJ_WEBSITE_URL } from '../../constants';
 import { User } from '../../types';
 
@@ -13,6 +13,7 @@ interface SidebarFooterProps {
     onNavigateToLeaders: () => void;
     onNavigateToGames: () => void;
     onNavigateToSermons: () => void;
+    onNavigateToPlans: () => void;
     currentView: string;
     theme: string;
     textClasses: string;
@@ -20,7 +21,7 @@ interface SidebarFooterProps {
 }
 
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({
-    isAdminOrLeader, onNavigateToAdmin, user, onNavigateToProfile, onOpenAuth, onNavigateToMap, onNavigateToLeaders, onNavigateToGames, onNavigateToSermons, currentView, theme, textClasses, onLogout
+    isAdminOrLeader, onNavigateToAdmin, user, onNavigateToProfile, onOpenAuth, onNavigateToMap, onNavigateToLeaders, onNavigateToGames, onNavigateToSermons, onNavigateToPlans, currentView, theme, textClasses, onLogout
 }) => {
     return (
         <div className={`p-4 border-t shrink-0 space-y-3 ${theme === 'dark' ? 'border-blue-900/30' : (theme === 'sepia' ? 'border-[#e2d5b6]' : 'border-neutral-200')}`}>
@@ -55,10 +56,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             )}
 
             <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => window.open(MJ_WEBSITE_URL, '_blank')} className={`p-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition-all text-[10px] font-black uppercase border border-transparent ${currentView === 'map' ? 'bg-orange-600 text-white shadow-orange-500/20' : (theme === 'dark' ? 'bg-blue-900/20 text-orange-500 hover:bg-[#1a2d4d]' : 'bg-neutral-100 text-orange-600 hover:bg-white')}`}>
-                    <Globe size={14} /> Web
+                <button onClick={onNavigateToPlans} className={`p-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition-all text-[10px] font-black uppercase border border-transparent ${currentView === 'plans' ? 'bg-orange-600 text-white shadow-orange-500/20' : (theme === 'dark' ? 'bg-blue-900/20 text-orange-500 hover:bg-[#1a2d4d]' : 'bg-neutral-100 text-orange-600 hover:bg-white')}`}>
+                    <BookOpen size={14} /> Planes
                 </button>
- 
+
                 <button id="tour-arcade-biblico" onClick={onNavigateToGames} className={`p-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition-all text-[10px] font-black uppercase border border-transparent ${currentView === 'games' ? 'bg-orange-600 text-white shadow-orange-500/20' : (theme === 'dark' ? 'bg-blue-900/20 text-orange-500 hover:bg-[#1a2d4d]' : 'bg-neutral-100 text-orange-600 hover:bg-white')}`}>
                     <Globe size={14} /> Arcade
                 </button>
