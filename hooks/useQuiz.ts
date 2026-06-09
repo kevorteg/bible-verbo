@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { QuizQuestion, Book, Chapter, Verse } from '../types';
-import { generateChapterQuiz, TriviaRecommendation, generateTriviaRecommendations, TriviaResult } from '../services/aiFeatures';
+import { generateChapterQuiz } from '../services/geminiService';
+import { TriviaRecommendation, generateTriviaRecommendations, TriviaResult } from '../services/aiFeatures';
 import { useAchievements } from './useAchievements';
 import { Achievement } from '../types';
 
@@ -99,7 +100,7 @@ export const useQuiz = (
                             id: `${currentBook.name}-${currentChapter.number}-${Date.now()}`,
                             title: recs.achievement.title,
                             description: recs.achievement.description,
-                            icon: recs.achievement.icon || '🏆',
+                            icon: recs.achievement.icon || 'trophy',
                             dateUnlocked: new Date().toISOString(),
                             type: finalScore === quizData.length ? 'expert' : (finalScore >= quizData.length * 0.8 ? 'honor' : 'troll')
                         };

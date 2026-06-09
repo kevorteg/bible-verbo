@@ -1,6 +1,5 @@
-import { callGeminiProxy, callGeminiHeavyProxy, CHAT_MODEL_STANDARD, TTS_MODEL, IMAGE_MODEL } from "./geminiService";
+import { callGeminiProxy, callGeminiHeavyProxy, CHAT_MODEL_STANDARD, TTS_MODEL, generateBiblicalImage, generateChapterQuiz, checkContentSafety } from "./geminiService";
 import { decodeBase64, pcmToWavBlob, audioBufferToWav } from "./audioUtils";
-import { QuizQuestion } from "../types";
 
 export const generatePodcastEpisode = async (
     text: string,
@@ -122,108 +121,7 @@ export const generatePodcastEpisode = async (
     }
 };
 
-export const generateBiblicalImage = async (verseText: string): Promise<string | null> => {
-    try {
-        const prompt = `Sacred biblical art: ${verseText}. Painting style, warm lighting, respectful representation.`;
 
-        const response = await callGeminiProxy({
-            model: IMAGE_MODEL,
-            contents: {
-                parts: [{ text: prompt }]
-            },
-            config: {
-                // Nano banana (flash-image) usually returns inlineData
-            }
-        });
-
-        // Check parts for image
-        const parts = response.candidates?.[0]?.content?.parts;
-        if (parts) {
-            for (const part of parts) {
-                if (part.inlineData) {
-                    return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                }
-            }
-        }
-        return null;
-    } catch (error) {
-        console.error("Gemini Image Gen Error:", error);
-        return null;
-    }
-};
-
-export const generateChapterQuiz = async (
-    chapterText: string,
-    bookName: string,
-    chapterNum: string,
-    difficulty: string = 'medio',
-    topic: string = 'general'
-): Promise<QuizQuestion[]> => {
-    try {
-        const prompt = `Genera un quiz de 5 preguntas de opción múltiple basado EXCLUSIVAMENTE en el siguiente texto bíblico de ${bookName} ${chapterNum}.
-        
-        CONFIGURACIÓN:
-        - Dificultad: ${difficulty.toUpperCase()} 
-          (Explorador/Fácil: Preguntas literales y básicas. 
-           Discípulo/Medio: Preguntas de comprensión. 
-           Maestro/Difícil: Preguntas de análisis teológico profundo).
-        - Enfoque Temático: ${topic.toUpperCase()} (Centra las preguntas en este tema: Historia, Teología, Personajes o Aplicación Práctica).
-        
-        TEXTO BÍBLICO: "${chapterText.substring(0, 12000)}..."
-
-        REGLAS DE FORMATO JSON:
-        Devuelve SOLO un JSON válido (sin markdown \`\`\`json) con este formato array:
-        [
-          {
-            "question": "¿Pregunta?",
-            "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
-            "correctIndex": 0, // Índice de la respuesta correcta (0-3)
-            "explanation": "Breve explicación educativa de por qué es la correcta y dónde encontrarla en el texto."
-          }
-        ]
-        `;
-
-        const response = await callGeminiProxy({
-            model: CHAT_MODEL_STANDARD,
-            contents: [{ parts: [{ text: prompt }] }],
-            config: {
-                responseMimeType: "application/json"
-            }
-        });
-
-        const jsonStr = response.text || "[]";
-        const cleanJson = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(cleanJson);
-    } catch (e) {
-        console.error("Error generating quiz", e);
-        return [];
-    }
-};
-
-// NUEVA FUNCIÓN: Verificar contenido seguro para el Muro de Clamor
-export const checkContentSafety = async (text: string): Promise<boolean> => {
-    try {
-        const prompt = `Analiza el siguiente texto de una petición de oración juvenil.
-        TEXTO: "${text}"
-        
-        REGLAS:
-        - Si contiene groserías, contenido sexual explícito, odio, violencia extrema o bullying: Responde "UNSAFE".
-        - Si es una petición válida (tristeza, ansiedad, fe, estudios, familia, incluso temas delicados como suicidio pero pidiendo ayuda): Responde "SAFE".
-        
-        SOLO RESPONDE UNA PALABRA: "SAFE" o "UNSAFE".`;
-
-        const response = await callGeminiProxy({
-            model: CHAT_MODEL_STANDARD,
-            contents: [{ parts: [{ text: prompt }] }]
-        });
-
-        const result = response.text?.trim().toUpperCase();
-        return result === 'SAFE';
-    } catch (e) {
-        console.error("Safety check error", e);
-        return true;
-    }
-};
 
 export interface TriviaRecommendation {
     title: string;

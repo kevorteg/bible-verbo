@@ -140,7 +140,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             </div>
                             <div className="mt-3 flex items-center gap-2 text-orange-600 dark:text-orange-400 font-bold text-[10px] uppercase tracking-widest">
                                 <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                {user.role.toUpperCase()}
+                                {user.role?.toUpperCase()}
                             </div>
                             {/* Actions Panel */}
                             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/10 space-y-2">

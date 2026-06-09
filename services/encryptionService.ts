@@ -1,10 +1,7 @@
 
 import CryptoJS from 'crypto-js';
 
-// NOTA DE SEGURIDAD:
-// En producción, esta llave debe estar en variables de entorno (.env) y NO en el código.
-// Si pierdes esta llave, los nombres de los usuarios serán irrecuperables.
-const SECRET_KEY = process.env.ENCRYPTION_KEY || 'VERBO_BIBLE_SECRET_KEY_AES_256'; 
+const SECRET_KEY = import.meta.env.VITE_ENCRYPTION_KEY || '';
 
 /**
  * Cifra texto plano.

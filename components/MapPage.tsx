@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Navigation, Search, Loader2, List, X, Menu, Compass, RefreshCcw } from 'lucide-react';
+import * as L from 'leaflet';
 import * as GeminiService from '../services/geminiService';
 import * as UserService from '../services/userService';
 import { ChurchLocation } from '../types';

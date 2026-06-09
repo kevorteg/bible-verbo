@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart } from 'lucide-react';
+import { Heart, Headphones } from 'lucide-react';
+import { findAudioBook } from './data/audioBooks';
 import { Bookmark as BookmarkType, NoteMap, ChurchLocation } from './types';
 import * as UserService from './services/userService';
 import Sidebar from './components/Sidebar';
@@ -17,18 +18,24 @@ import { ToastNotification } from './components/ToastNotification';
 import { useBibleReader } from './hooks/useBibleReader';
 import { useChat } from './hooks/useChat';
 import { useQuiz } from './hooks/useQuiz';
-import * as GeminiService from './services/geminiService'; // For direct calls if any remaining
+import * as GeminiService from './services/geminiService';
 import { GamesPage } from './components/GamesPage';
 import { DailyPromiseModal } from './components/DailyPromiseModal';
 import { TourGuide } from './components/TourGuide';
 import { SermonsPage } from './components/SermonsPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AudioPlayer } from './components/AudioPlayer';
+import { AudioLibrary } from './components/AudioLibrary';
+import { ReadingPlanPage } from './components/ReadingPlanPage';
+import { DEFAULT_BIBLE_ID } from './constants';
+import { setPendingVerse, setPendingChapter, parseBibleReference } from './services/navigation';
 
 // Wraps the main content to provide auth context cleanly
 const AppContent = () => {
   const { user, updateStats } = useAuth();
 
   const [theme, setTheme] = useState<'dark' | 'light' | 'sepia'>('dark');
-  const [currentView, setCurrentView] = useState<'reader' | 'dashboard' | 'map' | 'admin' | 'leaders' | 'games' | 'sermons'>('reader');
+  const [currentView, setCurrentView] = useState<'reader' | 'dashboard' | 'map' | 'admin' | 'leaders' | 'games' | 'sermons' | 'plans'>('reader');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -47,6 +54,12 @@ const AppContent = () => {
   const [showDailyPromise, setShowDailyPromise] = useState(false);
   const [startTour, setStartTour] = useState(false);
   const [mapMarkers, setMapMarkers] = useState<ChurchLocation[]>([]);
+  const [audioChapterId, setAudioChapterId] = useState<string | null>(null);
+  const [currentAudioVerse, setCurrentAudioVerse] = useState<string | null>(null);
+  const [audioBookNumber, setAudioBookNumber] = useState<number | null>(null);
+  const [audioBookName, setAudioBookName] = useState<string | null>(null);
+  const [audioChapterNum, setAudioChapterNum] = useState<string | null>(null);
+  const [showAudioLibrary, setShowAudioLibrary] = useState(false);
 
   useEffect(() => {
     // Guard: StrictMode runs effects twice in dev, this prevents double-fire
@@ -90,56 +103,69 @@ const AppContent = () => {
 
   const quiz = useQuiz(currentBook, currentChapter, verses, showToast);
 
-  // --- LOGICA DE NAVEGACION Y BUSQUEDA (detectAndNavigate) ---
-  // Se mantiene aquí porque orquesta cambios en el hook de biblia y vista
+  const handleAudioPlay = (bookNumber: number, bookName: string, chapterNum: number) => {
+    setAudioBookNumber(bookNumber);
+    setAudioBookName(bookName);
+    setAudioChapterNum(String(chapterNum));
+    setAudioChapterId(null);
+    setShowAudioLibrary(false);
+  };
+
+  const handleAudioPrevChapter = () => {
+    if (audioBookNumber && audioChapterNum) {
+      const ch = parseInt(audioChapterNum);
+      if (ch > 1) {
+        setAudioChapterNum(String(ch - 1));
+        setAudioChapterId(null);
+      }
+    }
+  };
+
+  const handleAudioNextChapter = () => {
+    if (audioBookNumber && audioChapterNum) {
+      const ch = parseInt(audioChapterNum);
+      const book = findAudioBook(audioBookNumber);
+      if (book && ch < book.chapters) {
+        setAudioChapterNum(String(ch + 1));
+        setAudioChapterId(null);
+      }
+    }
+  };
+
+  const handleToggleAudioPlay = () => {};
+
   const detectAndNavigate = (text: string) => {
-    // Limpiamos markdown y caracteres extraños
-    const cleanText = text.replace(/[*_#]/g, '').trim();
-    const bibleRegex = /([123]?\s?[a-z0-9áéíóúñ]+\s*[a-záéíóúñ]*)\s*(\d+)(?::(\d+))?/i;
-    const match = cleanText.match(bibleRegex);
+    const ref = parseBibleReference(text, apiBooks);
+    if (!ref || !ref.book) return;
 
-    if (match && apiBooks.length > 0) {
-      const rawBookName = match[1].toLowerCase().trim();
-      const normalizedQuery = rawBookName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const { book, chapterNum, verseNum } = ref;
+    showToast(`Yendo a ${book.name} ${chapterNum}${verseNum ? ':' + verseNum : ''}...`);
+    setCurrentView('reader');
 
-      // Evitamos falsos positivos con palabras de 1 letra (ej: "y 3")
-      if (normalizedQuery.length < 2) return;
+    if (verseNum) setPendingVerse(String(verseNum));
 
-      const chapterNum = parseInt(match[2]);
-      const verseNum = match[3] ? parseInt(match[3]) : null;
-
-      const foundBook = apiBooks.find(b => {
-        const normalizedBookName = b.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        // 1. Coincidencia exacta del ID
-        if (b.id.toLowerCase() === rawBookName) return true;
-        // 2. El nombre del libro contiene la query (pero la query debe ser relevante)
-        return normalizedBookName.includes(normalizedQuery);
-      });
-
-      if (foundBook) {
-        showToast(`Yendo a ${foundBook.name} ${chapterNum}${verseNum ? ':' + verseNum : ''}...`);
-        setCurrentView('reader');
-        if (verseNum) (window as any)._pendingVerse = verseNum;
-        if (currentBook && foundBook.id === currentBook.id) {
-          const targetChapter = chaptersList.find(c => parseInt(c.number) === chapterNum);
-          if (targetChapter) {
-            if (currentChapter && targetChapter.id === currentChapter.id) {
-              if (verseNum) {
-                setHighlightedVerseId(String(verseNum));
-                delete (window as any)._pendingVerse;
-              }
-            } else {
-              setCurrentChapter(targetChapter);
-            }
-          } else {
-            (window as any)._pendingChapter = chapterNum;
+    if (currentBook && book.id === currentBook.id) {
+      const targetChapter = chaptersList.find((c) => parseInt(c.number) === chapterNum);
+      if (targetChapter) {
+        if (currentChapter && targetChapter.id === currentChapter.id) {
+          if (verseNum) {
+            setHighlightedVerseId(String(verseNum));
+            setPendingVerse(null);
           }
         } else {
-          setCurrentBook(foundBook);
-          (window as any)._pendingChapter = chapterNum;
+          setCurrentChapter(targetChapter);
         }
-        if (window.innerWidth < 1024) { setSidebarOpen(false); setRightPanelOpen(false); }
+      } else {
+        setPendingChapter(chapterNum);
       }
+    } else {
+      setCurrentBook(book);
+      setPendingChapter(chapterNum);
+    }
+
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+      setRightPanelOpen(false);
     }
   };
 
@@ -150,13 +176,6 @@ const AppContent = () => {
       setSidebarOpen(true);
       setRightPanelOpen(true);
     }
-    if (!(window as any).html2canvas) {
-      const script = document.createElement('script');
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-      script.async = true;
-      document.head.appendChild(script);
-    }
-
     const savedTheme = localStorage.getItem('verbo_theme');
     if (savedTheme) setTheme(savedTheme as any);
 
@@ -301,42 +320,75 @@ const AppContent = () => {
       );
     }
 
+    if (currentView === 'plans') {
+      return (
+        <ReadingPlanPage
+          onNavigateToChapter={(bookId, chapterNum) => {
+            const book = apiBooks.find(b => b.id === bookId);
+            if (!book) return;
+            setCurrentBook(book);
+            setPendingChapter(chapterNum);
+            setCurrentView('reader');
+          }}
+          onBack={() => setCurrentView('reader')}
+        />
+      );
+    }
+
     return (
-      <Reader
-        currentBook={currentBook}
-        currentChapter={currentChapter}
-        verses={verses}
-        chaptersList={chaptersList}
-        onPrevChapter={handlePrevChapter}
-        onNextChapter={handleNextChapter}
-        onSelectChapter={setCurrentChapter}
-        loading={loading}
-        theme={theme}
-        setTheme={setTheme}
-        fontSize={fontSize}
-        setFontSize={setFontSize}
-        fontFamily={fontFamily}
-        setFontFamily={setFontFamily}
-        showChapterGrid={showChapterGrid}
-        setShowChapterGrid={setShowChapterGrid}
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        rightPanelOpen={rightPanelOpen}
-        setRightPanelOpen={setRightPanelOpen}
-        selectedVerse={selectedVerse}
-        setSelectedVerse={setSelectedVerse}
-        bookmarks={bookmarks}
-        onToggleBookmark={toggleBookmark}
-        highlightedVerseId={highlightedVerseId}
-        onClearHighlight={() => setHighlightedVerseId(null)}
-        readChapters={readChapters}
-        onToggleReadChapter={handleToggleReadChapter}
-        onStartQuiz={() => {
-          setRightPanelOpen(true);
-          setActiveTab('quiz');
-          quiz.setTopic('aplicacion');
-        }}
-      />
+      <div className={containerClass}>
+        <Reader
+          currentBook={currentBook}
+          currentChapter={currentChapter}
+          verses={verses}
+          chaptersList={chaptersList}
+          onPrevChapter={handlePrevChapter}
+          onNextChapter={handleNextChapter}
+          onSelectChapter={setCurrentChapter}
+          loading={loading}
+          theme={theme}
+          setTheme={setTheme}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
+          showChapterGrid={showChapterGrid}
+          setShowChapterGrid={setShowChapterGrid}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          rightPanelOpen={rightPanelOpen}
+          setRightPanelOpen={setRightPanelOpen}
+          selectedVerse={selectedVerse}
+          setSelectedVerse={setSelectedVerse}
+          bookmarks={bookmarks}
+          onToggleBookmark={toggleBookmark}
+          highlightedVerseId={highlightedVerseId}
+          currentAudioVerse={currentAudioVerse}
+          onClearHighlight={() => setHighlightedVerseId(null)}
+          readChapters={readChapters}
+          onToggleReadChapter={handleToggleReadChapter}
+          onStartQuiz={() => {
+            setRightPanelOpen(true);
+            setActiveTab('quiz');
+            quiz.setTopic('aplicacion');
+          }}
+        />
+
+        {currentBook && currentChapter && !loading && verses.length > 0 && (
+          <button
+            onClick={() => {
+              setAudioChapterId(currentChapter.id);
+              setAudioBookNumber(currentBook.number ? parseInt(currentBook.number) : null);
+              setAudioBookName(currentBook.name);
+              setAudioChapterNum(currentChapter.number);
+            }}
+            className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all hover:scale-110"
+            title="Escuchar capítulo"
+          >
+            <Headphones size={20} />
+          </button>
+        )}
+      </div>
     );
   };
 
@@ -432,6 +484,14 @@ const AppContent = () => {
           setCurrentView('sermons');
           if (window.innerWidth < 1024) setSidebarOpen(false);
         }}
+        onNavigateToPlans={() => {
+          setCurrentView('plans');
+          if (window.innerWidth < 1024) setSidebarOpen(false);
+        }}
+        onNavigateToAudio={() => {
+          setShowAudioLibrary(true);
+          if (window.innerWidth < 1024) setSidebarOpen(false);
+        }}
         currentView={currentView}
       />
 
@@ -486,15 +546,52 @@ const AppContent = () => {
           quizUnlockedAchievement={quiz.unlockedAchievement}
         />
       </div>
+
+      {(audioChapterId || (audioBookNumber && audioChapterNum)) && (
+        <AudioPlayer
+          chapterId={audioChapterId || undefined}
+          bookName={audioBookName || currentBook?.name || ''}
+          chapterNum={audioChapterNum || currentChapter?.number || ''}
+          bookNumber={audioBookNumber || undefined}
+          verses={audioChapterId ? verses : undefined}
+          theme={theme}
+          onVerseChange={(vn) => setCurrentAudioVerse(vn)}
+          onToggleLibrary={() => setShowAudioLibrary(true)}
+          onPrevChapter={handleAudioPrevChapter}
+          onNextChapter={handleAudioNextChapter}
+          onClose={() => {
+            setAudioChapterId(null);
+            setAudioBookNumber(null);
+            setAudioBookName(null);
+            setAudioChapterNum(null);
+            setCurrentAudioVerse(null);
+          }}
+        />
+      )}
+
+      {showAudioLibrary && (
+        <AudioLibrary
+          theme={theme}
+          nowPlaying={audioBookNumber && audioChapterNum ? { bookNumber: audioBookNumber, bookName: audioBookName || '', chapterNum: parseInt(audioChapterNum) } : null}
+          isPlaying={false}
+          onPlay={handleAudioPlay}
+          onTogglePlay={handleToggleAudioPlay}
+          onPrevChapter={handleAudioPrevChapter}
+          onNextChapter={handleAudioNextChapter}
+          onClose={() => setShowAudioLibrary(false)}
+        />
+      )}
     </div>
   );
 };
 
 const App = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

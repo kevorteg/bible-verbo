@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { X, Download, Share2, Image as ImageIcon, Palette } from 'lucide-react';
 import { Verse, Book, Chapter } from '../types';
 import { MJ_LOGO_URL } from '../constants';
+import html2canvas from 'html2canvas';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -30,12 +31,11 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, verse, book, c
   if (!isOpen) return null;
 
   const handleDownload = async () => {
-    if (!previewRef.current || !(window as any).html2canvas) return;
+    if (!previewRef.current) return;
     setIsCapturing(true);
     
     try {
-      // @ts-ignore
-      const canvas = await (window as any).html2canvas(previewRef.current, {
+      const canvas = await html2canvas(previewRef.current, {
         scale: 2,
         useCORS: true,
         backgroundColor: null

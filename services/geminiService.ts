@@ -1,7 +1,8 @@
 
 import { ChatMessage, QuizQuestion } from "../types";
 import { getMjSystemPromptInfo } from "../mj_info";
-import { decodeBase64, decodeAudioData } from "./audioUtils";
+import { decodeBase64, decodeAudioData, pcmToWavBlob } from "./audioUtils";
+import { supabase } from "./supabaseClient";
 
 /**
  * Proxy helper function to call Gemini through Vercel Functions (Fast tasks).
@@ -40,14 +41,14 @@ export async function callGeminiProxy(payload: any) {
 export async function callGeminiHeavyProxy(payload: any) {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || '';
     
     const response = await fetch(`${supabaseUrl}/functions/v1/verbo-heavy-ai`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'apikey': supabaseAnonKey
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload)
     });
@@ -243,6 +244,36 @@ export const generateSpeech = async (text: string): Promise<void> => {
     }
   } catch (error) {
     console.error("Gemini TTS Error:", error);
+  }
+};
+
+export const generateSpeechBlob = async (text: string): Promise<Blob | null> => {
+  try {
+    const speechText = text.replace(/<<<MAP_DATA_START>>>[\s\S]*?<<<MAP_DATA_END>>>/g, '')
+      .replace(/\[CONTACTO:.*?\]/g, '')
+      .replace(/\[NAV:.*?\]/g, '');
+
+    const response = await callGeminiHeavyProxy({
+      model: TTS_MODEL,
+      contents: [{ parts: [{ text: speechText }] }],
+      config: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
+          },
+        },
+      },
+    });
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) return null;
+
+    const pcmBytes = decodeBase64(base64Audio);
+    return pcmToWavBlob(pcmBytes, 24000, 1);
+  } catch (error) {
+    console.error("Gemini TTS Blob Error:", error);
+    return null;
   }
 };
 
