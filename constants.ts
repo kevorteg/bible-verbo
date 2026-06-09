@@ -1,5 +1,6 @@
 // Nota: Las API Keys se manejan ahora internamente a través de /api/ proxies por seguridad.
 export const DEFAULT_BIBLE_ID = "592420522e16049f-01"; // Reina Valera 1909
+export const AUDIO_BIBLE_ID = "826f63861180e056-01"; // NTV (Nueva Traduccion Viviente) para audio
 
 export const BIBLE_VERSIONS = [
   { name: "Reina Valera 1909", id: "592420522e16049f-01" },

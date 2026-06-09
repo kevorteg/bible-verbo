@@ -70,6 +70,22 @@ export default defineConfig(({ mode }) => {
           configureServer(server) {
             server.middlewares.use(async (req, res, next) => {
               const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+
+              if (url.pathname.startsWith('/audio/Biblia/')) {
+                const filePath = path.join(__dirname, 'static', url.pathname);
+                const fs = await import('fs');
+                if (fs.existsSync(filePath)) {
+                  const ext = path.extname(filePath).toLowerCase();
+                  const mime = ext === '.mp3' ? 'audio/mpeg' : 'application/octet-stream';
+                  res.writeHead(200, { 'Content-Type': mime, 'Accept-Ranges': 'bytes' });
+                  const stream = fs.createReadStream(filePath);
+                  stream.pipe(res);
+                  return;
+                }
+                res.writeHead(404);
+                res.end();
+                return;
+              }
               
               if (url.pathname === '/api/bible') {
                 const bPath = url.searchParams.get('path');

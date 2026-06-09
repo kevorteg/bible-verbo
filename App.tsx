@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, Headphones } from 'lucide-react';
+import { findAudioBook } from './data/audioBooks';
 import { Bookmark as BookmarkType, NoteMap, ChurchLocation } from './types';
 import * as UserService from './services/userService';
 import Sidebar from './components/Sidebar';
@@ -24,6 +25,7 @@ import { TourGuide } from './components/TourGuide';
 import { SermonsPage } from './components/SermonsPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AudioPlayer } from './components/AudioPlayer';
+import { AudioLibrary } from './components/AudioLibrary';
 import { ReadingPlanPage } from './components/ReadingPlanPage';
 import { DEFAULT_BIBLE_ID } from './constants';
 import { setPendingVerse, setPendingChapter, parseBibleReference } from './services/navigation';
@@ -53,6 +55,11 @@ const AppContent = () => {
   const [startTour, setStartTour] = useState(false);
   const [mapMarkers, setMapMarkers] = useState<ChurchLocation[]>([]);
   const [audioChapterId, setAudioChapterId] = useState<string | null>(null);
+  const [currentAudioVerse, setCurrentAudioVerse] = useState<string | null>(null);
+  const [audioBookNumber, setAudioBookNumber] = useState<number | null>(null);
+  const [audioBookName, setAudioBookName] = useState<string | null>(null);
+  const [audioChapterNum, setAudioChapterNum] = useState<string | null>(null);
+  const [showAudioLibrary, setShowAudioLibrary] = useState(false);
 
   useEffect(() => {
     // Guard: StrictMode runs effects twice in dev, this prevents double-fire
@@ -95,6 +102,37 @@ const AppContent = () => {
   } = bible;
 
   const quiz = useQuiz(currentBook, currentChapter, verses, showToast);
+
+  const handleAudioPlay = (bookNumber: number, bookName: string, chapterNum: number) => {
+    setAudioBookNumber(bookNumber);
+    setAudioBookName(bookName);
+    setAudioChapterNum(String(chapterNum));
+    setAudioChapterId(null);
+    setShowAudioLibrary(false);
+  };
+
+  const handleAudioPrevChapter = () => {
+    if (audioBookNumber && audioChapterNum) {
+      const ch = parseInt(audioChapterNum);
+      if (ch > 1) {
+        setAudioChapterNum(String(ch - 1));
+        setAudioChapterId(null);
+      }
+    }
+  };
+
+  const handleAudioNextChapter = () => {
+    if (audioBookNumber && audioChapterNum) {
+      const ch = parseInt(audioChapterNum);
+      const book = findAudioBook(audioBookNumber);
+      if (book && ch < book.chapters) {
+        setAudioChapterNum(String(ch + 1));
+        setAudioChapterId(null);
+      }
+    }
+  };
+
+  const handleToggleAudioPlay = () => {};
 
   const detectAndNavigate = (text: string) => {
     const ref = parseBibleReference(text, apiBooks);
@@ -325,6 +363,7 @@ const AppContent = () => {
           bookmarks={bookmarks}
           onToggleBookmark={toggleBookmark}
           highlightedVerseId={highlightedVerseId}
+          currentAudioVerse={currentAudioVerse}
           onClearHighlight={() => setHighlightedVerseId(null)}
           readChapters={readChapters}
           onToggleReadChapter={handleToggleReadChapter}
@@ -337,7 +376,12 @@ const AppContent = () => {
 
         {currentBook && currentChapter && !loading && verses.length > 0 && (
           <button
-            onClick={() => setAudioChapterId(currentChapter.id)}
+            onClick={() => {
+              setAudioChapterId(currentChapter.id);
+              setAudioBookNumber(currentBook.number ? parseInt(currentBook.number) : null);
+              setAudioBookName(currentBook.name);
+              setAudioChapterNum(currentChapter.number);
+            }}
             className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all hover:scale-110"
             title="Escuchar capítulo"
           >
@@ -444,6 +488,10 @@ const AppContent = () => {
           setCurrentView('plans');
           if (window.innerWidth < 1024) setSidebarOpen(false);
         }}
+        onNavigateToAudio={() => {
+          setShowAudioLibrary(true);
+          if (window.innerWidth < 1024) setSidebarOpen(false);
+        }}
         currentView={currentView}
       />
 
@@ -499,15 +547,38 @@ const AppContent = () => {
         />
       </div>
 
-      {audioChapterId && currentBook && currentChapter && (
+      {(audioChapterId || (audioBookNumber && audioChapterNum)) && (
         <AudioPlayer
-          bibleId={bibleId}
-          chapterId={audioChapterId}
-          bookName={currentBook.name}
-          chapterNum={currentChapter.number}
-          verses={verses}
+          chapterId={audioChapterId || undefined}
+          bookName={audioBookName || currentBook?.name || ''}
+          chapterNum={audioChapterNum || currentChapter?.number || ''}
+          bookNumber={audioBookNumber || undefined}
+          verses={audioChapterId ? verses : undefined}
           theme={theme}
-          onClose={() => setAudioChapterId(null)}
+          onVerseChange={(vn) => setCurrentAudioVerse(vn)}
+          onToggleLibrary={() => setShowAudioLibrary(true)}
+          onPrevChapter={handleAudioPrevChapter}
+          onNextChapter={handleAudioNextChapter}
+          onClose={() => {
+            setAudioChapterId(null);
+            setAudioBookNumber(null);
+            setAudioBookName(null);
+            setAudioChapterNum(null);
+            setCurrentAudioVerse(null);
+          }}
+        />
+      )}
+
+      {showAudioLibrary && (
+        <AudioLibrary
+          theme={theme}
+          nowPlaying={audioBookNumber && audioChapterNum ? { bookNumber: audioBookNumber, bookName: audioBookName || '', chapterNum: parseInt(audioChapterNum) } : null}
+          isPlaying={false}
+          onPlay={handleAudioPlay}
+          onTogglePlay={handleToggleAudioPlay}
+          onPrevChapter={handleAudioPrevChapter}
+          onNextChapter={handleAudioNextChapter}
+          onClose={() => setShowAudioLibrary(false)}
         />
       )}
     </div>

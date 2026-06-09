@@ -100,7 +100,7 @@ export const useQuiz = (
                             id: `${currentBook.name}-${currentChapter.number}-${Date.now()}`,
                             title: recs.achievement.title,
                             description: recs.achievement.description,
-                            icon: recs.achievement.icon || '🏆',
+                            icon: recs.achievement.icon || 'trophy',
                             dateUnlocked: new Date().toISOString(),
                             type: finalScore === quizData.length ? 'expert' : (finalScore >= quizData.length * 0.8 ? 'honor' : 'troll')
                         };

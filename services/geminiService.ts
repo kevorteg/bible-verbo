@@ -1,7 +1,7 @@
 
 import { ChatMessage, QuizQuestion } from "../types";
 import { getMjSystemPromptInfo } from "../mj_info";
-import { decodeBase64, decodeAudioData } from "./audioUtils";
+import { decodeBase64, decodeAudioData, pcmToWavBlob } from "./audioUtils";
 import { supabase } from "./supabaseClient";
 
 /**
@@ -244,6 +244,36 @@ export const generateSpeech = async (text: string): Promise<void> => {
     }
   } catch (error) {
     console.error("Gemini TTS Error:", error);
+  }
+};
+
+export const generateSpeechBlob = async (text: string): Promise<Blob | null> => {
+  try {
+    const speechText = text.replace(/<<<MAP_DATA_START>>>[\s\S]*?<<<MAP_DATA_END>>>/g, '')
+      .replace(/\[CONTACTO:.*?\]/g, '')
+      .replace(/\[NAV:.*?\]/g, '');
+
+    const response = await callGeminiHeavyProxy({
+      model: TTS_MODEL,
+      contents: [{ parts: [{ text: speechText }] }],
+      config: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
+          },
+        },
+      },
+    });
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) return null;
+
+    const pcmBytes = decodeBase64(base64Audio);
+    return pcmToWavBlob(pcmBytes, 24000, 1);
+  } catch (error) {
+    console.error("Gemini TTS Blob Error:", error);
+    return null;
   }
 };
 

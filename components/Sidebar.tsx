@@ -24,11 +24,12 @@ interface SidebarProps {
   onNavigateToGames: () => void;
   onNavigateToSermons: () => void;
   onNavigateToPlans: () => void;
+  onNavigateToAudio: () => void;
   currentView: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  isOpen, onClose, theme, bibleId, setBibleId, apiBooks, currentBook, onSelectBook, onOpenAuth, onNavigateToProfile, onNavigateToMap, onNavigateToAdmin, onNavigateToLeaders, onNavigateToGames, onNavigateToSermons, onNavigateToPlans, currentView
+  isOpen, onClose, theme, bibleId, setBibleId, apiBooks, currentBook, onSelectBook, onOpenAuth, onNavigateToProfile, onNavigateToMap, onNavigateToAdmin, onNavigateToLeaders, onNavigateToGames, onNavigateToSermons, onNavigateToPlans, onNavigateToAudio, currentView
 }) => {
   const { user, logout } = useAuth();
 
@@ -94,6 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         onNavigateToGames={onNavigateToGames}
         onNavigateToSermons={onNavigateToSermons}
         onNavigateToPlans={onNavigateToPlans}
+        onNavigateToAudio={onNavigateToAudio}
         currentView={currentView}
         theme={theme}
         textClasses={textClasses}

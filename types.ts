@@ -7,6 +7,7 @@ export interface BibleVersion {
 export interface Book {
   id: string;
   name: string;
+  number?: string;
   bibleId: string;
 }
 

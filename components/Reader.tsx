@@ -30,6 +30,7 @@ interface ReaderProps {
   bookmarks: BookmarkType[];
   onToggleBookmark: (v: Verse) => void;
   highlightedVerseId: string | null;
+  currentAudioVerse?: string | null;
   onQuickAction?: (customText?: string) => void;
   onClearHighlight: () => void;
   // New props for tracker
@@ -57,7 +58,7 @@ const Reader: React.FC<ReaderProps> = ({
   showChapterGrid, setShowChapterGrid,
   sidebarOpen, setSidebarOpen, rightPanelOpen, setRightPanelOpen,
   selectedVerse, setSelectedVerse, bookmarks, onToggleBookmark, highlightedVerseId,
-  onClearHighlight, readChapters, onToggleReadChapter, onStartQuiz
+  currentAudioVerse, onClearHighlight, readChapters, onToggleReadChapter, onStartQuiz
 }) => {
   const verseRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -253,8 +254,20 @@ const Reader: React.FC<ReaderProps> = ({
         isAutoScrolling.current = false;
       }
     };
-    setTimeout(tryScroll, 300); // Esperamos un poco más al renderizado
+    setTimeout(tryScroll, 300);
   }, [highlightedVerseId, verses, loading]);
+
+  useEffect(() => {
+    if (!currentAudioVerse) return;
+    isAutoScrolling.current = true;
+    const el = verseRefs.current[currentAudioVerse];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => { isAutoScrolling.current = false; }, 600);
+    } else {
+      setTimeout(() => { isAutoScrolling.current = false; }, 100);
+    }
+  }, [currentAudioVerse]);
 
   const handleScroll = () => {
     if (!isAutoScrolling.current && highlightedVerseId) {
@@ -534,6 +547,7 @@ const Reader: React.FC<ReaderProps> = ({
             <div className="space-y-4 mb-16" style={{ fontSize: `${fontSize}px`, lineHeight: 1.65, fontFamily: fontFamily }}>
               {verses.map(v => {
                 const isHighlighted = highlightedVerseId === v.number;
+                const isAudioVerse = currentAudioVerse === v.number;
                 const isSelected = selectedVerse?.id === v.id;
 
                 return (
@@ -544,7 +558,9 @@ const Reader: React.FC<ReaderProps> = ({
                     className={`group flex gap-3 p-4 rounded-xl transition-all cursor-pointer relative duration-200 active:scale-[0.98] active:bg-orange-600/20
                       ${isHighlighted
                         ? 'bg-[#1a2d4d] border-l-4 border-orange-500 shadow-2xl scale-[1.02] z-10 my-4'
-                        : (isSelected ? 'bg-orange-600/10 border-l-4 border-orange-600/50' : 'hover:bg-blue-800/10 border-l-4 border-transparent')
+                        : isAudioVerse
+                          ? 'bg-orange-500/10 border-l-4 border-orange-400 shadow-lg'
+                          : (isSelected ? 'bg-orange-600/10 border-l-4 border-orange-600/50' : 'hover:bg-blue-800/10 border-l-4 border-transparent')
                       }`}
                     onClick={() => setSelectedVerse(v)}
                   >
