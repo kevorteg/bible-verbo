@@ -1,421 +1,183 @@
+import { ChatMessage, QuizQuestion } from '../types';
+import { getMjSystemPromptInfo } from '../mj_info';
 
-import { ChatMessage, QuizQuestion } from "../types";
-import { getMjSystemPromptInfo } from "../mj_info";
-import { decodeBase64, decodeAudioData } from "./audioUtils";
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-/**
- * Proxy helper function to call Gemini through Vercel Functions (Fast tasks).
- */
-export async function callGeminiProxy(payload: any) {
+const fallbackResponses = [
+  '"Bienaventurados los que tienen hambre y sed de justicia, porque ellos seran saciados." Mateo 5:6',
+  'La Palabra de Dios dice: "No temas, porque yo estoy contigo." Isaías 41:10',
+  '"Porque yo se los pensamientos que tengo acerca de vosotros, pensamientos de paz, y no de mal." Jeremias 29:11',
+  'Jesus dijo: "Venid a mi todos los que estais trabajados y cargados, y yo os hare descansar." Mateo 11:28',
+  '"Todo lo puedo en Cristo que me fortalece." Filipenses 4:13',
+  'La fe es la certeza de lo que se espera, la conviccion de lo que no se ve. (Hebreos 11:1)',
+  'El amor de Dios ha sido derramado en nuestros corazones por el Espiritu Santo. (Romanos 5:5)',
+  'Dios es nuestro amparo y fortaleza, nuestro pronto auxilio en las tribulaciones. (Salmo 46:1)',
+  'Gracias por tu mensaje. En estos momentos no puedo conectarme con la IA, pero recuerda que Dios te ama y tiene un proposito para tu vida.',
+  'Sigue buscando a Dios en oracion y en Su Palabra. El siempre responde en el momento perfecto.',
+];
+
+function getRandomFallback(): string {
+  return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+}
+
+export async function callGeminiDirect(payload: any) {
+  const url = `${GEMINI_API_URL}/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
   try {
-    const response = await fetch('/api/gemini', {
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Gemini Proxy Error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Gemini Error: ${response.status}`);
     }
 
     const data = await response.json();
-    // Normalize response: ensure .text is available if it's a simple text response
     if (data.candidates?.[0]?.content?.parts?.[0]?.text && !data.text) {
-        data.text = data.candidates[0].content.parts[0].text;
+      data.text = data.candidates[0].content.parts[0].text;
     }
     return data;
   } catch (error) {
-    console.error("Gemini Proxy Fetch Error:", error);
+    console.error('Gemini Fetch Error:', error);
     throw error;
   }
 }
 
-/**
- * Proxy helper function to call Gemini through Supabase Edge Functions (Heavy tasks).
- * This bypasses Vercel's 10s timeout.
- */
-export async function callGeminiHeavyProxy(payload: any) {
+export async function sendChatMessage(
+  messages: ChatMessage[],
+  systemContext?: string
+): Promise<string> {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    const response = await fetch(`${supabaseUrl}/functions/v1/verbo-heavy-ai`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'apikey': supabaseAnonKey
+    const systemPrompt = systemContext || getMjSystemPromptInfo();
+
+    const contents = messages.map((msg) => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.text }],
+    }));
+
+    const payload = {
+      contents,
+      systemInstruction: {
+        parts: [{ text: systemPrompt }],
       },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Heavy Proxy Error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    // Normalize response
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text && !data.text) {
-        data.text = data.candidates[0].content.parts[0].text;
-    }
-    return data;
-  } catch (error) {
-    console.error("Gemini Heavy Proxy Error:", error);
-    throw error;
-  }
-}
-
-// Models
-export const CHAT_MODEL_STANDARD = 'gemini-2.5-flash';
-export const CHAT_MODEL_MAPS = 'gemini-2.5-flash';
-// Audio: gemini-2.0-flash-preview-tts is the only model with modality AUDIO
-export const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
-export const IMAGE_MODEL = 'gemini-2.5-flash-preview-image-generation';
-
-export const generateChatResponse = async (
-  history: ChatMessage[],
-  verseContext: string | null,
-  isStudy: boolean = false,
-  userLocation?: { latitude: number; longitude: number } // Nuevo parámetro opcional
-): Promise<string> => {
-  try {
-    const mjInfo = getMjSystemPromptInfo();
-
-    const systemPrompt = `Eres Verbo, un mentor bíblico y compañero universitario de Misión Juvenil (MJ).
-
-    ${mjInfo}
-
-    TU PERSONALIDAD:
-    - Eres conciso y directo en conversaciones casuales.
-    - Eres estructurado y pedagógico cuando enseñas teología o historia.
-
-    UBICACIÓN DE IGLESIAS (CRÍTICO):
-    - Si el usuario comparte su ubicación, tu TAREA PRINCIPAL es usar Google Maps para encontrar **TODAS** las congregaciones "Iglesia Pentecostal Unida de Colombia" (IPUC) cercanas.
-    - **NO** te limites a las más grandes. Busca también sedes de barrio (Ej: "IPUC Guayaquil", "IPUC La Floresta", "IPUC Central").
-    - Si el usuario pregunta por una sede específica (ej: "IPUC Guayaquil"), búscala específicamente en el mapa.
-    - **PRECISIÓN DE NOMBRES:** Usa SIEMPRE el nombre oficial que aparece en el mapa.
-    
-    **GENERACIÓN DE DATOS DE MAPA (ESTRICTO):**
-    Si encuentras iglesias, AL FINAL de tu respuesta, genera un bloque de datos oculto para que el sistema dibuje el mapa.
-    Formato OBLIGATORIO:
-    <<<MAP_DATA_START>>>
-    [
-      { "name": "IPUC Guayaquil", "lat": 3.4372, "lng": -76.5225, "address": "Cl. 15 #23-23" },
-      { "name": "IPUC Central", "lat": 3.4516, "lng": -76.5320, "address": "Cra 8 #12" }
-    ]
-    <<<MAP_DATA_END>>>
-    
-    Asegúrate de extraer las coordenadas de la herramienta de mapas. El JSON debe ser válido.
-
-    DEBES USAR ETIQUETAS DE NAVEGACIÓN [NAV:...] (CRÍTICO):
-    - Cada vez que menciones una cita bíblica (Ej: "Juan 3:16", "Salmos 23"), DEBES incluir al final de la frase la etiqueta oculta [NAV:Libro Cap:Verso].
-    - Ejemplo: "Porque de tal manera amó Dios al mundo... como dice Juan 3:16 [NAV:Juan 3:16]"
-    - ESTO ES OBLIGATORIO PARA QUE LA APP MUESTRE EL VERSÍCULO AUTOMÁTICAMENTE. NO OLVIDES ESTA ETIQUETA.
-
-    Contexto actual (si aplica): ${verseContext || "Conversación general"}`;
-
-    // Convert internal history to Gemini format
-    const recentHistory = history.slice(-8);
-    let conversationStr = "";
-    recentHistory.forEach(msg => {
-      // Filtramos el bloque de mapa del historial para no confundir al modelo en turnos siguientes
-      const textClean = msg.text.replace(/<<<MAP_DATA_START>>>[\s\S]*?<<<MAP_DATA_END>>>/, '').trim();
-      conversationStr += `${msg.role === 'user' ? 'User' : 'Model'}: ${textClean}\n`;
-    });
-
-    // CONFIGURACIÓN DINÁMICA: Si hay ubicación, usamos Maps Grounding y modelo 2.5
-    const modelToUse = userLocation ? CHAT_MODEL_MAPS : CHAT_MODEL_STANDARD;
-    const toolsConfig = userLocation ? [{ googleMaps: {} }] : undefined;
-    const retrievalConfig = userLocation ? { retrievalConfig: { latLng: userLocation } } : undefined;
-
-    const proxyToUse = userLocation ? callGeminiHeavyProxy : callGeminiProxy;
-
-    const response = await proxyToUse({
-      model: modelToUse,
-      contents: [
-        { role: 'user', parts: [{ text: conversationStr }] }
-      ],
-      config: {
-        systemInstruction: systemPrompt,
-        tools: toolsConfig,
-        toolConfig: retrievalConfig
-      }
-    });
-
-    let finalText = response.text || "No pude procesar la respuesta.";
-
-    return finalText;
-  } catch (error) {
-    console.error("Gemini Chat Error:", error);
-    return "Lo siento, hubo un error técnico. Por favor intenta de nuevo.";
-  }
-};
-
-export const generateDailyPromise = async (userName?: string): Promise<{verse: string, text: string}> => {
-  try {
-    const prompt = `
-      Actúa como "Verbo", un mentor espiritual. Genera una "Promesa del Día" inspiradora (máximo 2 oraciones breves) y un versículo bíblico corto relacionado.
-      ${userName ? `Dirígete al usuario por su nombre: ${userName}.` : 'Habla en segunda persona.'}
-      
-      Devuelve ÚNICAMENTE un JSON válido con este formato exacto:
-      {
-        "verse": "(Ej: Isaías 41:10)",
-        "text": "Mensaje de ánimo inspirador..."
-      }
-    `;
-
-    const response = await callGeminiProxy({
-      model: CHAT_MODEL_STANDARD,
-      contents: [{ parts: [{ text: prompt }] }],
-      config: { responseMimeType: "application/json" }
-    });
-
-    const jsonStr = response.text || "{}";
-    const cleanJson = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
-  } catch (e: any) {
-    console.error("Error generating daily promise:", e);
-    return {
-      verse: "Jeremías 33:3",
-      text: "Clama a mí, y yo te responderé, y te enseñaré cosas grandes y ocultas que tú no conoces."
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+      },
     };
+
+    const data = await callGeminiDirect(payload);
+    return data.text || getRandomFallback();
+  } catch {
+    return getRandomFallback();
   }
-};
+}
 
-// Variables globales para controlar la reproducción de audio (Singleton)
-let currentAudioContext: AudioContext | null = null;
-let currentSource: AudioBufferSourceNode | null = null;
+const fallbackQuiz: QuizQuestion[] = [
+  { question: 'Cuantos libros tiene la Biblia?', options: ['A) 27', 'B) 39', 'C) 66', 'D) 73'], correctIndex: 2, explanation: 'La Biblia tiene 66 libros: 39 en el Antiguo Testamento y 27 en el Nuevo Testamento.' },
+  { question: 'Quien construyo el arca en el Antiguo Testamento?', options: ['A) Moises', 'B) Abraham', 'C) Noe', 'D) David'], correctIndex: 2, explanation: 'Dios le ordeno a Noe construir un arca para salvar a su familia y a los animales.' },
+  { question: 'Cual es el mandamiento mas importante segun Jesus?', options: ['A) No robar', 'B) Amar a Dios y al projimo', 'C) Guardar el sabado', 'D) Diezmar'], correctIndex: 1, explanation: 'Jesus dijo que el amor a Dios y al projimo es el mandamiento mas importante.' },
+];
 
-export const generateSpeech = async (text: string): Promise<void> => {
+export async function generateQuiz(
+  difficulty: string = 'facil',
+  topic: string = 'general',
+  bookName?: string,
+  chapterNum?: string,
+  verses?: string
+): Promise<QuizQuestion[]> {
   try {
-    // 1. Detener audio anterior si existe
-    if (currentSource) {
-      try { currentSource.stop(); } catch (e) { /* Ignorar error si ya paró */ }
-      currentSource = null;
-    }
-    if (currentAudioContext) {
-      try { await currentAudioContext.close(); } catch (e) { /* Ignorar */ }
-      currentAudioContext = null;
+    let context = '';
+    if (bookName && chapterNum) {
+      context = `\nContexto: ${bookName} ${chapterNum}\n${verses ? `Versiculos: ${verses}` : ''}`;
     }
 
-    // Limpiamos el texto de bloques de datos antes de hablar
-    const speechText = text.replace(/<<<MAP_DATA_START>>>[\s\S]*?<<<MAP_DATA_END>>>/g, '')
-      .replace(/\[CONTACTO:.*?\]/g, 'Contacto disponible en pantalla.')
-      .replace(/\[NAV:.*?\]/g, '');
+    const prompt = `Genera 3 preguntas de opcion multiple biblicas con dificultad ${difficulty} y tema ${topic}.${context}
 
-    const response = await callGeminiHeavyProxy({
-      model: TTS_MODEL,
-      contents: [{ parts: [{ text: speechText }] }],
-      config: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' },
-          },
-        },
+Formato JSON requerido:
+[
+  {
+    "question": "Pregunta aqui",
+    "options": ["A) Opcion 1", "B) Opcion 2", "C) Opcion 3", "D) Opcion 4"],
+    "correctIndex": 0,
+    "explanation": "Explicacion breve"
+  }
+]
+
+Responde SOLO con el JSON, sin markdown ni texto adicional.`;
+
+    const payload = {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 2048,
       },
-    });
+    };
 
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-    if (base64Audio) {
-      // 2. Crear nuevo contexto y fuente
-      currentAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      const audioBytes = decodeBase64(base64Audio);
-      const audioBuffer = await decodeAudioData(audioBytes, currentAudioContext!);
-
-      currentSource = currentAudioContext!.createBufferSource();
-      currentSource.buffer = audioBuffer;
-      currentSource.connect(currentAudioContext!.destination);
-
-      // 3. Reproducir
-      currentSource.start();
-
-      // Limpieza automática al terminar
-      currentSource.onended = () => {
-        currentSource = null;
-        // No cerramos el context inmediatamente para evitar cortes abruptos, o lo dejamos para la siguiente llamada
-      };
-    }
-  } catch (error) {
-    console.error("Gemini TTS Error:", error);
+    const data = await callGeminiDirect(payload);
+    const jsonText = data.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    return JSON.parse(jsonText);
+  } catch {
+    return fallbackQuiz;
   }
-};
+}
 
-export const generateBiblicalImage = async (verseText: string): Promise<string | null> => {
+export async function generateVerboCast(
+  bookName: string,
+  chapterNum: string,
+  verses: string,
+  style: string
+): Promise<string> {
   try {
-    const prompt = `Sacred biblical art: ${verseText}. Painting style, warm lighting, respectful representation.`;
+    const prompt = `Eres un presentador de podcast juvenil y energetico. Crea un episodio de VerboCast sobre ${bookName} ${chapterNum} en estilo ${style}.
 
-    const response = await callGeminiHeavyProxy({
-      model: IMAGE_MODEL,
-      contents: {
-        parts: [{ text: prompt }]
+Contexto:
+${verses}
+
+Estructura del episodio:
+1. Introduccion llamativa (15 segundos)
+2. Lectura del pasaje
+3. Reflexion juvenil y aplicacion practica
+4. Oracion guiada
+5. Cierre motivacional
+
+Escribe el guion completo del episodio.`;
+
+    const payload = {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.8,
+        maxOutputTokens: 2048,
       },
-      config: {
-        // Nano banana (flash-image) usually returns inlineData
-      }
-    });
+    };
 
-    // Check parts for image
-    const parts = response.candidates?.[0]?.content?.parts;
-    if (parts) {
-      for (const part of parts) {
-        if (part.inlineData) {
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-      }
-    }
+    const data = await callGeminiDirect(payload);
+    return data.text || 'No se pudo generar el episodio en este momento. Intenta de nuevo mas tarde.';
+  } catch {
+    return 'No se pudo generar el episodio en este momento. Intenta de nuevo mas tarde.';
+  }
+}
+
+export async function generateImage(prompt: string): Promise<string | null> {
+  try {
+    const payload = {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 2048,
+      },
+    };
+
+    const data = await callGeminiDirect(payload);
+    const imageData = data.candidates?.[0]?.content?.parts?.find(
+      (p: any) => p.inlineData
+    )?.inlineData?.data;
+    return imageData || null;
+  } catch {
     return null;
-  } catch (error) {
-    console.error("Gemini Image Gen Error:", error);
-    return null;
   }
-};
-
-export const generateChapterQuiz = async (chapterText: string, bookName: string, chapterNum: string, difficulty: string = 'medio', topic: string = 'general'): Promise<QuizQuestion[]> => {
-  try {
-    const modelToUse = CHAT_MODEL_STANDARD;
-
-    let difficultyPrompt = "";
-    switch (difficulty) {
-      case 'facil': difficultyPrompt = "Nivel Explorador: Preguntas básicas y hechos literales fáciles de encontrar en el texto."; break;
-      case 'medio': difficultyPrompt = "Nivel Discípulo: Preguntas que requieren comprensión lectora y relación de ideas."; break;
-      case 'dificil': difficultyPrompt = "Nivel Maestro: Preguntas teológicas profundas, simbolismos o análisis detallado."; break;
-      default: difficultyPrompt = "Nivel Discípulo: Preguntas que requieren comprensión lectora y relación de ideas."; break;
-    }
-
-    let topicPrompt = "";
-    switch (topic) {
-      case 'general': topicPrompt = "Variado: Mezcla hechos, personajes y enseñanzas."; break;
-      case 'historia': topicPrompt = "Enfoque Histórico: Céntrate en cronología, lugares, eventos y contexto cultural."; break;
-      case 'teologia': topicPrompt = "Enfoque Teológico: Céntrate en doctrinas, atributos de Dios y significados espirituales."; break;
-      case 'aplicacion': topicPrompt = "Enfoque Práctico: Céntrate en lecciones de vida y aplicación moderna de los principios."; break;
-      default: topicPrompt = "Variado: Mezcla hechos, personajes y enseñanzas."; break;
-    }
-
-    const prompt = `
-      Actúa como un profesor experto de Biblia. Genera un quiz de 3 preguntas de opción múltiple basado EXCLUSIVAMENTE en el siguiente texto de ${bookName} ${chapterNum}.
-      
-      CONFIGURACIÓN DEL QUIZ:
-      - Dificultad: ${difficultyPrompt}
-      - Tema: ${topicPrompt}
-
-      TEXTO BÍBLICO:
-      "${chapterText.substring(0, 8000)}"
-
-      FORMATO JSON REQUERIDO:
-      [
-        {
-          "question": "Pregunta...",
-          "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
-          "correctIndex": 0, // 0-3
-          "explanation": "Breve explicación de por qué es la correcta."
-        }
-      ]
-      IMPORTANTE: Devuelve SOLO el JSON, sin markdown ni texto adicional.
-    `;
-
-    const response = await callGeminiProxy({
-      model: modelToUse,
-      contents: [{ parts: [{ text: prompt }] }],
-      config: {
-        responseMimeType: "application/json"
-      }
-    });
-
-    const jsonStr = response.text || "[]";
-    const cleanJson = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
-  } catch (e: any) {
-    console.error("Error generating quiz:", e);
-    throw new Error(e.message || "Error desconocido al generar quiz");
-  }
-};
-
-export const generateLeaderActivity = async (
-  type: string,
-  format: string,
-  target: string,
-  topic: string,
-  bookContext: string,
-  chapterContext: string
-): Promise<string> => {
-  try {
-    const prompt = `
-      Actúa como un experto en pedagogía juvenil cristiana y mentor de líderes.
-      Tu tarea es diseñar una DINÁMICA O JUEGO GRUPAL creativo, bíblico y memorable.
-      
-      PARÁMETROS DEL LÍDER:
-      - TIPO DE ACTIVIDAD: ${type}
-      - FORMATO/LUGAR: ${format}
-      - PÚBLICO OBJETIVO: ${target}
-      - TEMA/ENSEÑANZA: ${topic}
-      - CONTEXTO BÍBLICO (Opcional): ${bookContext} ${chapterContext}
-
-      Genera una respuesta estructurada en formato JSON EXCLUSIVAMENTE (sin markdown de código).
-      El JSON debe tener esta estructura exacta:
-      {
-        "title": "Título Creativo y Pegajoso",
-        "time": "Tiempo estimado",
-        "materials": ["Material 1", "Material 2"],
-        "objective": "Objetivo pedagógico breve",
-        "steps": [
-          { "title": "Nombre del Paso", "description": "Instrucción clara" }
-        ],
-        "biblicalConnection": "Explicación de la conexión con el pasaje",
-        "questions": ["Pregunta 1", "Pregunta 2", "Pregunta 3"]
-      }
-
-      Usa un tono dinámico, inspirador y juvenil. NO uses emojis en la respuesta.
-    `;
-
-    const response = await callGeminiProxy({
-      model: CHAT_MODEL_STANDARD,
-      contents: [{ parts: [{ text: prompt }] }],
-      config: { responseMimeType: "application/json" }
-    });
-
-    return response.text || "{}";
-  } catch (e: any) {
-    console.error("Error generating activity:", e);
-    // Fallback JSON en caso de error para no romper la UI nueva
-    return JSON.stringify({
-      title: "Error de Conexión",
-      time: "0 min",
-      materials: [],
-      objective: "No pudimos generar la actividad. Intenta de nuevo.",
-      steps: [],
-      biblicalConnection: "",
-      questions: []
-    });
-  }
-};
-
-// NUEVA FUNCIÓN: Verificar contenido seguro para el Muro de Clamor
-export const checkContentSafety = async (text: string): Promise<boolean> => {
-  try {
-    const prompt = `Analiza el siguiente texto de una petición de oración juvenil.
-        TEXTO: "${text}"
-        
-        REGLAS:
-        - Si contiene groserías, contenido sexual explícito, odio, violencia extrema o bullying: Responde "UNSAFE".
-        - Si es una petición válida (tristeza, ansiedad, fe, estudios, familia, incluso temas delicados como suicidio pero pidiendo ayuda): Responde "SAFE".
-        
-        SOLO RESPONDE UNA PALABRA: "SAFE" o "UNSAFE".`;
-
-    const response = await callGeminiProxy({
-      model: CHAT_MODEL_STANDARD,
-      contents: [{ parts: [{ text: prompt }] }]
-    });
-
-    const result = response.text?.trim().toUpperCase();
-    return result === 'SAFE';
-  } catch (e) {
-    console.error("Safety check error", e);
-    return true; // En caso de error técnico, permitimos (fallback) o bloqueamos según política. Por ahora permitimos para no bloquear UX.
-  }
-};
+}

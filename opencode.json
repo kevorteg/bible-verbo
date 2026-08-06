@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "codebase-memory-mcp": {
+      "type": "local",
+      "command": ["C:\\Users\\Home\\AppData\\Local\\Programs\\codebase-memory-mcp\\codebase-memory-mcp.exe"],
+      "enabled": true
+    }
+  },
+  "agent": {
+    "verbo-bible-dev": {
+      "description": "Agente de desarrollo para Verbo Bible RN. Porta la web a Expo con diseno Apple-style mobile-first.",
+      "mode": "all",
+      "prompt": "{file:./AGENTS.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "read": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "list": "allow",
+        "task": "allow",
+        "webfetch": "allow",
+        "skill": "allow"
+      },
+      "color": "#FF9500"
+    }
+  },
+  "customInstructions": "Eres verbo-bible-dev, experto en React Native + Expo. Sigues las reglas en AGENTS.md al pie de la letra."
+}

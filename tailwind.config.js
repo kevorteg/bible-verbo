@@ -1,0 +1,57 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './app/**/*.{js,jsx,ts,tsx}',
+    './components/**/*.{js,jsx,ts,tsx}',
+  ],
+  presets: [require('nativewind/preset')],
+  theme: {
+    extend: {
+      colors: {
+        'verbo-bg': '#fff8f5',
+        'verbo-surface': '#fff8f5',
+        'verbo-surface-lowest': '#ffffff',
+        'verbo-surface-low': '#fff1ea',
+        'verbo-surface-container': '#feeae0',
+        'verbo-surface-high': '#f8e4da',
+        'verbo-surface-highest': '#f2dfd5',
+        'verbo-primary': '#F58634',
+        'verbo-primary-container': '#F58634',
+        'verbo-primary-shadow': '#C86721',
+        'verbo-secondary': '#449BD1',
+        'verbo-secondary-container': '#449BD1',
+        'verbo-secondary-shadow': '#31729A',
+        'verbo-tertiary': '#473458',
+        'verbo-tertiary-container': '#b29ac5',
+        'verbo-tertiary-shadow': '#2d1f3b',
+        'verbo-on-surface': '#473458',
+        'verbo-on-surface-variant': '#564337',
+        'verbo-outline': '#897265',
+        'verbo-outline-variant': '#ddc1b2',
+        'verbo-on-primary': '#ffffff',
+        'verbo-on-secondary': '#ffffff',
+        'verbo-on-tertiary': '#ffffff',
+      },
+      borderRadius: {
+        'verbo': '1rem',
+        'verbo-lg': '2rem',
+        'verbo-xl': '3rem',
+      },
+      fontFamily: {
+        'heading': ['BricolageGrotesque'],
+        'body': ['PlusJakartaSans'],
+        'label': ['SpaceGrotesk'],
+      },
+      fontSize: {
+        'headline-xl': ['40px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'headline-lg': ['32px', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '800' }],
+        'headline-md': ['24px', { lineHeight: '1.3', fontWeight: '700' }],
+        'body-lg': ['18px', { lineHeight: '1.6', fontWeight: '500' }],
+        'body-md': ['16px', { lineHeight: '1.5', fontWeight: '500' }],
+        'label-lg': ['14px', { lineHeight: '1.2', fontWeight: '700' }],
+        'label-md': ['12px', { lineHeight: '1.2', fontWeight: '700' }],
+      },
+    },
+  },
+  plugins: [],
+};

@@ -1,80 +1,92 @@
-import { BibleApiResponse, Book, Chapter, Verse, BibleContentNode } from '../types';
+import { Book, Chapter, Verse, BibleContentNode } from '../types';
 
-/**
- * Realiza peticiones a través del proxy de Vercel (servidor) para ocultar la API Key.
- */
+const API_BIBLE_KEY = process.env.EXPO_PUBLIC_BIBLE_API_KEY || '';
+const API_BIBLE_BASE = 'https://api.scripture.api.bible/v1';
+
 async function getFromApi<T>(endpoint: string): Promise<T> {
-  const url = `/api/bible?path=${encodeURIComponent(endpoint)}`;
+  const url = `${API_BIBLE_BASE}${endpoint}`;
+
+  if (!API_BIBLE_KEY) {
+    throw new Error('API_BIBLE_KEY no configurada. Agrega EXPO_PUBLIC_BIBLE_API_KEY en .env');
+  }
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'api-key': API_BIBLE_KEY,
+      },
+    });
     if (!response.ok) {
-       const errorData = await response.json().catch(() => ({}));
-       throw new Error(errorData.error || `Server Error: ${response.status}`);
+      const errorText = await response.text().catch(() => '');
+      let errorDetail = `HTTP ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorDetail = errorJson.error || errorJson.message || errorDetail;
+      } catch {}
+      throw new Error(`Bible API Error: ${errorDetail}`);
     }
     return await response.json();
   } catch (err) {
-    console.error("Bible Proxy Fetch Error:", err);
+    if (err instanceof TypeError && err.message === 'Network request failed') {
+      throw new Error('No se pudo conectar con la API de la Biblia. Verifica tu conexion a internet.');
+    }
     throw err;
   }
 }
 
 export const fetchBooks = async (bibleId: string): Promise<Book[]> => {
   try {
-    const data: BibleApiResponse<Book[]> = await getFromApi(`/${bibleId}/books`);
+    const data: { data: Book[] } = await getFromApi(`/bibles/${bibleId}/books`);
     return data.data;
   } catch (error) {
-    console.error("Error fetching books:", error);
+    console.error('Error fetching books:', error);
     throw error;
   }
 };
 
 export const fetchChapters = async (bibleId: string, bookId: string): Promise<Chapter[]> => {
   try {
-    const data: BibleApiResponse<Chapter[]> = await getFromApi(`/${bibleId}/books/${bookId}/chapters`);
-    // Filter out intro chapters typically marked as 'intro'
+    const data: { data: Chapter[] } = await getFromApi(`/bibles/${bibleId}/books/${bookId}/chapters`);
     return data.data.filter(c => c.number !== 'intro');
   } catch (error) {
-    console.error("Error fetching chapters:", error);
+    console.error('Error fetching chapters:', error);
     throw error;
   }
 };
 
 export const fetchChapterContent = async (bibleId: string, chapterId: string): Promise<Verse[]> => {
   try {
-    const endpoint = `/${bibleId}/chapters/${chapterId}?content-type=json&include-notes=false&include-titles=false`;
-    const data: BibleApiResponse<{ content: BibleContentNode[] }> = await getFromApi(endpoint);
-    
+    const endpoint = `/bibles/${bibleId}/chapters/${chapterId}?content-type=json&include-notes=false&include-titles=false`;
+    const data: { data: { content: BibleContentNode[] } } = await getFromApi(endpoint);
+
     const extractedVerses: Verse[] = [];
     let tempVerseNum: string | null = null;
 
-    // Recursive parser for the Bible JSON content structure
     const parse = (nodes: BibleContentNode[]) => {
       nodes.forEach(n => {
         if (n.type === 'tag' && n.name === 'verse') {
           tempVerseNum = n.attrs?.number || null;
         }
-        
+
         if (n.text && tempVerseNum) {
           const existingVerse = extractedVerses.find(v => v.number === tempVerseNum);
           let cleanText = n.text;
-          
-          // Remove leading verse number if present in text
+
           if (cleanText.trim().startsWith(tempVerseNum)) {
-            cleanText = cleanText.trim().replace(new RegExp(`^${tempVerseNum}\\s*`), "");
+            cleanText = cleanText.trim().replace(new RegExp(`^${tempVerseNum}\\s*`), '');
           }
-          
+
           if (existingVerse) {
             existingVerse.text += cleanText;
           } else {
             extractedVerses.push({
               id: n.verseId || `${chapterId}-${tempVerseNum}`,
               number: tempVerseNum,
-              text: cleanText
+              text: cleanText,
             });
           }
         }
-        
+
         if (n.items) {
           parse(n.items);
         }
@@ -84,10 +96,10 @@ export const fetchChapterContent = async (bibleId: string, chapterId: string): P
     if (data.data && data.data.content) {
       parse(data.data.content);
     }
-    
+
     return extractedVerses;
   } catch (error) {
-    console.error("Error fetching verses:", error);
+    console.error('Error fetching verses:', error);
     throw error;
   }
 };

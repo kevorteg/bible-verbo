@@ -1,272 +1,125 @@
-[
-  {
-    "id": "WDxXSOeTdFM",
-    "title": "ATADO ESPIRITUALMENTE: VENCER EL PECADO",
-    "preacher": "Pr. Jhon Fabio García",
-    "date": "2024-04-12",
-    "thumbnail": "https://img.youtube.com/vi/WDxXSOeTdFM/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=WDxXSOeTdFM",
-    "category": "Arrepentimiento",
-    "duration": "53:52"
-  },
-  {
-    "id": "VgiTdpqul_A",
-    "title": "EL ARREPENTIMIENTO BÍBLICO",
-    "preacher": "Pr. Vicente Arango",
-    "date": "2024-04-05",
-    "thumbnail": "https://img.youtube.com/vi/VgiTdpqul_A/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=VgiTdpqul_A",
-    "category": "Arrepentimiento",
-    "duration": "51:35"
-  },
-  {
-    "id": "sTthSsMuZpY",
-    "title": "ARREPENTIMIENTO Y PERDÓN",
-    "preacher": "Pr. Álvaro Torres",
-    "date": "2023-11-20",
-    "thumbnail": "https://img.youtube.com/vi/sTthSsMuZpY/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=sTthSsMuZpY",
-    "category": "Arrepentimiento",
-    "duration": "45:10"
-  },
-  {
-    "id": "q3WQ9nk7ZhU",
-    "title": "PON A DIOS EN PRIMER LUGAR (MAYORDOMÍA)",
-    "preacher": "Pr. Wilson Rojas",
-    "date": "2024-03-25",
-    "thumbnail": "https://img.youtube.com/vi/q3WQ9nk7ZhU/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=q3WQ9nk7ZhU",
-    "category": "Mayordomía",
-    "duration": "58:12"
-  },
-  {
-    "id": "Vh3Kiy9uPQE",
-    "title": "MAYORDOMÍA FINANCIERA",
-    "preacher": "Pr. Alberto Morales",
-    "date": "2023-09-15",
-    "thumbnail": "https://img.youtube.com/vi/Vh3Kiy9uPQE/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=Vh3Kiy9uPQE",
-    "category": "Mayordomía",
-    "duration": "48:30"
-  },
-  {
-    "id": "WDxXSOeTdFM",
-    "title": "EL ESPÍRITU SANTO: PALABRA GOTA A GOTA",
-    "preacher": "Pr. Álvaro Torres",
-    "date": "2024-03-10",
-    "thumbnail": "https://img.youtube.com/vi/WDxXSOeTdFM/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=WDxXSOeTdFM",
-    "category": "Espíritu Santo",
-    "duration": "56:20"
-  },
-  {
-    "id": "VgiTdpqul_A",
-    "title": "LLENOS DEL ESPÍRITU SANTO",
-    "preacher": "Pr. Reinel Galvis",
-    "date": "2023-08-22",
-    "thumbnail": "https://img.youtube.com/vi/VgiTdpqul_A/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=VgiTdpqul_A",
-    "category": "Espíritu Santo",
-    "duration": "52:10"
-  },
-  {
-    "id": "sTthSsMuZpY",
-    "title": "EL HOMBRE DE FE Y EL CRÉDULO",
-    "preacher": "Pr. Álvaro Torres",
-    "date": "2024-04-10",
-    "thumbnail": "https://img.youtube.com/vi/sTthSsMuZpY/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=sTthSsMuZpY",
-    "category": "Fe",
-    "duration": "43:30"
-  },
-  {
-    "id": "q3WQ9nk7ZhU",
-    "title": "UNA IDEA BORROSA DE JESÚS vs LA FE",
-    "preacher": "Pr. Álvaro Torres",
-    "date": "2024-03-15",
-    "thumbnail": "https://img.youtube.com/vi/q3WQ9nk7ZhU/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=q3WQ9nk7ZhU",
-    "category": "Fe",
-    "duration": "49:47"
-  },
-  {
-    "id": "Vh3Kiy9uPQE",
-    "title": "EL ETERNO AMOR DE DIOS",
-    "preacher": "Pr. Reinel Galvis",
-    "date": "2024-02-15",
-    "thumbnail": "https://img.youtube.com/vi/Vh3Kiy9uPQE/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=Vh3Kiy9uPQE",
-    "category": "Amor",
-    "duration": "47:15"
-  },
-  {
-    "id": "WDxXSOeTdFM",
-    "title": "EL AMOR QUE RESTAURA",
-    "preacher": "Pr. Gerardo Murillo",
-    "date": "2023-10-05",
-    "thumbnail": "https://img.youtube.com/vi/WDxXSOeTdFM/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=WDxXSOeTdFM",
-    "category": "Amor",
-    "duration": "41:20"
-  },
-  {
-    "id": "VgiTdpqul_A",
-    "title": "UN CORAZÓN AGRADECIDO POR LA MISIÓN",
-    "preacher": "Pr. Álvaro Torres",
-    "date": "2024-02-28",
-    "thumbnail": "https://img.youtube.com/vi/VgiTdpqul_A/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=VgiTdpqul_A",
-    "category": "Agradecimiento",
-    "duration": "25:15"
-  },
-  {
-    "id": "sTthSsMuZpY",
-    "title": "EL PODER DEL AGRADECIMIENTO",
-    "preacher": "Pr. Jhon Fabio García",
-    "date": "2023-12-31",
-    "thumbnail": "https://img.youtube.com/vi/sTthSsMuZpY/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=sTthSsMuZpY",
-    "category": "Agradecimiento",
-    "duration": "44:55"
-  },
-  {
-    "id": "q3WQ9nk7ZhU",
-    "title": "CAMINANDO CON DIOS EN OTRA GENERACIÓN",
-    "preacher": "Pr. Gerardo Murillo",
-    "date": "2024-03-28",
-    "thumbnail": "https://img.youtube.com/vi/q3WQ9nk7ZhU/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=q3WQ9nk7ZhU",
-    "category": "Caminar con Dios",
-    "duration": "1:17:19"
-  },
-  {
-    "id": "Vh3Kiy9uPQE",
-    "title": "CAMINAR CON EL SEÑOR",
-    "preacher": "Pr. Vicente Arango",
-    "date": "2023-11-10",
-    "thumbnail": "https://img.youtube.com/vi/Vh3Kiy9uPQE/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=Vh3Kiy9uPQE",
-    "category": "Caminar con Dios",
-    "duration": "50:30"
-  },
-  {
-    "id": "WDxXSOeTdFM",
-    "title": "EL BAUTISMO EN EL NOMBRE DE JESÚS",
-    "preacher": "Pr. Vicente Arango",
-    "date": "2024-03-20",
-    "thumbnail": "https://img.youtube.com/vi/WDxXSOeTdFM/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=WDxXSOeTdFM",
-    "category": "Bautismo",
-    "duration": "41:23"
-  },
-  {
-    "id": "VgiTdpqul_A",
-    "title": "LA IMPORTANCIA DEL BAUTISMO",
-    "preacher": "Pr. Wilson Rojas",
-    "date": "2023-07-14",
-    "thumbnail": "https://img.youtube.com/vi/VgiTdpqul_A/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=VgiTdpqul_A",
-    "category": "Bautismo",
-    "duration": "46:15"
-  },
-  {
-    "id": "sTthSsMuZpY",
-    "title": "LA ESENCIA DEL ARREPENTIMIENTO",
-    "preacher": "Pr. Mario Carmona",
-    "date": "2022-09-12",
-    "thumbnail": "https://img.youtube.com/vi/sTthSsMuZpY/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=sTthSsMuZpY",
-    "category": "Arrepentimiento",
-    "duration": "48:10"
-  },
-  {
-    "id": "q3WQ9nk7ZhU",
-    "title": "LA FE QUE MUEVE MONTAÑAS",
-    "preacher": "Pr. Jhon Fabio García",
-    "date": "2023-05-18",
-    "thumbnail": "https://img.youtube.com/vi/q3WQ9nk7ZhU/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=q3WQ9nk7ZhU",
-    "category": "Fe",
-    "duration": "55:20"
-  },
-  {
-    "id": "Vh3Kiy9uPQE",
-    "title": "EL VERDADERO AMOR AL PRÓJIMO",
-    "preacher": "Pr. Wilson Rojas",
-    "date": "2023-11-22",
-    "thumbnail": "https://img.youtube.com/vi/Vh3Kiy9uPQE/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=Vh3Kiy9uPQE",
-    "category": "Amor",
-    "duration": "42:15"
-  },
-  {
-    "id": "WDxXSOeTdFM",
-    "title": "PRINCIPIOS DE MAYORDOMÍA",
-    "preacher": "Pr. Álvaro Torres",
-    "date": "2023-08-30",
-    "thumbnail": "https://img.youtube.com/vi/WDxXSOeTdFM/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=WDxXSOeTdFM",
-    "category": "Mayordomía",
-    "duration": "1:02:45"
-  },
-  {
-    "id": "VgiTdpqul_A",
-    "title": "EL BAUTISMO: UN PASO DE FE",
-    "preacher": "Pr. Gerardo Murillo",
-    "date": "2024-01-15",
-    "thumbnail": "https://img.youtube.com/vi/VgiTdpqul_A/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=VgiTdpqul_A",
-    "category": "Bautismo",
-    "duration": "50:12"
-  },
-  {
-    "id": "sTthSsMuZpY",
-    "title": "EL VALOR DEL COMPROMISO",
-    "preacher": "Pr. Wilson Rojas",
-    "date": "2024-01-20",
-    "thumbnail": "https://img.youtube.com/vi/sTthSsMuZpY/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=sTthSsMuZpY",
-    "category": "Caminar con Dios",
-    "duration": "48:15"
-  },
-  {
-    "id": "q3WQ9nk7ZhU",
-    "title": "DIOS PROVEERÁ (MAYORDOMÍA)",
-    "preacher": "Pr. Wilson Rojas",
-    "date": "2023-10-18",
-    "thumbnail": "https://img.youtube.com/vi/q3WQ9nk7ZhU/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=q3WQ9nk7ZhU",
-    "category": "Mayordomía",
-    "duration": "52:10"
-  },
-  {
-    "id": "Vh3Kiy9uPQE",
-    "title": "EL PODER DEL ARREPENTIMIENTO",
-    "preacher": "Pr. Jhon Fabio García",
-    "date": "2024-02-12",
-    "thumbnail": "https://img.youtube.com/vi/Vh3Kiy9uPQE/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=Vh3Kiy9uPQE",
-    "category": "Arrepentimiento",
-    "duration": "55:30"
-  },
-  {
-    "id": "WDxXSOeTdFM",
-    "title": "LA IMPORTANCIA DE LA FE",
-    "preacher": "Pr. Jhon Fabio García",
-    "date": "2023-09-05",
-    "thumbnail": "https://img.youtube.com/vi/WDxXSOeTdFM/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=WDxXSOeTdFM",
-    "category": "Fe",
-    "duration": "49:22"
-  },
-  {
-    "id": "qFl5gJDe_Xk",
-    "title": "Como ENAMORAR a DIOS, y OBTENER su MISERICORDIA ",
-    "preacher": "Pr. Wilson Rojas",
-    "date": "2024-07-18",
-    "thumbnail": "https://img.youtube.com/vi/qFl5gJDe_Xk/hqdefault.jpg",
-    "videoUrl": "https://www.youtube.com/watch?v=qFl5gJDe_Xk",
-    "category": "Amor",
-    "duration": "45:46"
-  }
-]
+{
+  "updatedAt": "2026-07-04T16:00:00Z",
+  "sermons": [
+    {
+      "id": "sermon-001",
+      "title": "El Arrepentimiento que Transforma",
+      "preacher": "Pastor Juan Carlos",
+      "date": "2026-06-28",
+      "duration": "42:15",
+      "category": "Arrepentimiento",
+      "youtubeId": "pSxZTLRObNo",
+      "description": "Un llamado genuino al arrepentimiento, no como sentimiento de culpa sino como transformacion radical del corazon. Basado en 2 Corintios 7:10.",
+      "verse": "2 Corintios 7:10",
+      "views": 1234
+    },
+    {
+      "id": "sermon-002",
+      "title": "Administrando los Recursos de Dios",
+      "preacher": "Pastora Maria Lopez",
+      "date": "2026-06-21",
+      "duration": "38:50",
+      "category": "Mayordomia",
+      "youtubeId": "DimPGDtGsww",
+      "description": "Principios biblicos de mayordomia: tiempo, talentos y tesoros. Como ser fiel administrador de lo que Dios nos ha confiado.",
+      "verse": "Mateo 25:14-30",
+      "views": 892
+    },
+    {
+      "id": "sermon-003",
+      "title": "El Fruto del Espiritu: Amor y Gozo",
+      "preacher": "Pastor Juan Carlos",
+      "date": "2026-06-14",
+      "duration": "45:00",
+      "category": "Espiritu Santo",
+      "youtubeId": "e8wcn03MzX4",
+      "description": "Explorando el fruto del Espiritu Santo en nuestra vida diaria. Como el amor y el gozo sobrenatural se manifiestan en el creyente.",
+      "verse": "Galatas 5:22-23",
+      "views": 1567
+    },
+    {
+      "id": "sermon-004",
+      "title": "La Fe que Mueve Montañas",
+      "preacher": "Hermano David Rios",
+      "date": "2026-06-07",
+      "duration": "36:30",
+      "category": "Fe",
+      "youtubeId": "-gaVmqfiwNI",
+      "description": "Una predica poderosa sobre la fe genuina que agrada a Dios. No es fe en la fe, sino fe en el Dios que todo lo puede.",
+      "verse": "Hebreos 11:1-6",
+      "views": 2103
+    },
+    {
+      "id": "sermon-005",
+      "title": "Amor Incondicional: Como Dios Ama",
+      "preacher": "Pastora Maria Lopez",
+      "date": "2026-05-31",
+      "duration": "40:10",
+      "category": "Amor",
+      "youtubeId": "pxh2iVcfPvA",
+      "description": "El amor de Dios no se basa en nuestro desempeno. Aprendamos a recibir y dar amor incondicional como Cristo nos amo.",
+      "verse": "1 Juan 4:7-12",
+      "views": 1789
+    },
+    {
+      "id": "sermon-006",
+      "title": "Viviendo con Accion de Gracias",
+      "preacher": "Pastor Juan Carlos",
+      "date": "2026-05-24",
+      "duration": "39:45",
+      "category": "Agradecimiento",
+      "youtubeId": "1znt5PcIS7A",
+      "description": "La gratitud no es solo un sentimiento sino una decision. Descubre como la accion de gracias transforma tu perspectiva y acerca tu corazon a Dios.",
+      "verse": "1 Tesalonicenses 5:18",
+      "views": 1456
+    },
+    {
+      "id": "sermon-007",
+      "title": "Caminando con Dios en Tiempos Dificiles",
+      "preacher": "Hermano David Rios",
+      "date": "2026-05-17",
+      "duration": "44:20",
+      "category": "Caminar con Dios",
+      "youtubeId": "t7fEFaM_irg",
+      "description": "Como mantener una relacion intima con Dios cuando las circunstancias son adversas. Lecciones de Enoc y su caminar con Dios.",
+      "verse": "Genesis 5:22-24",
+      "views": 2345
+    },
+    {
+      "id": "sermon-008",
+      "title": "Las Aguas del Bautismo",
+      "preacher": "Pastor Juan Carlos",
+      "date": "2026-05-10",
+      "duration": "35:55",
+      "category": "Bautismo",
+      "youtubeId": "6opR8a4U41c",
+      "description": "El significado profundo del bautismo: muerte al viejo hombre y resurreccion a una nueva vida en Cristo. Un llamado a la obediencia.",
+      "verse": "Romanos 6:3-4",
+      "views": 1123
+    },
+    {
+      "id": "sermon-009",
+      "title": "El Poder del Espiritu Santo en tu Vida",
+      "preacher": "Pastora Maria Lopez",
+      "date": "2026-05-03",
+      "duration": "41:30",
+      "category": "Espiritu Santo",
+      "youtubeId": "2kiHYrhLEUk",
+      "description": "El Espiritu Santo no es una fuerza impersonal sino una persona divina que mora en nosotros. Descubre su poder transformador.",
+      "verse": "Hechos 1:8",
+      "views": 1890
+    },
+    {
+      "id": "sermon-010",
+      "title": "Fe en Accion: Atrevete a Creer",
+      "preacher": "Pastor Juan Carlos",
+      "date": "2026-04-26",
+      "duration": "37:40",
+      "category": "Fe",
+      "youtubeId": "q31wHIfL3Aw",
+      "description": "La fe sin obras es muerta. Como poner tu fe en accion y ver el poder de Dios manifestarse en tu vida diaria.",
+      "verse": "Santiago 2:17-18",
+      "views": 2678
+    }
+  ]
+}

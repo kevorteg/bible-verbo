@@ -1,4 +1,3 @@
-
 export interface BibleVersion {
   name: string;
   id: string;
@@ -36,7 +35,6 @@ export interface Bookmark extends Verse {
 
 export type NoteMap = Record<string, string>;
 
-// Mapa de lectura: BookID -> Array de números de capítulos leídos
 export type ReadProgressMap = Record<string, string[]>;
 
 export interface QuizQuestion {
@@ -53,10 +51,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  avatar?: string; // Base64 string
+  avatar?: string;
   joinedDate: string;
-  role?: 'user' | 'admin' | 'leader'; // NUEVO: Rol para moderación
-  isVerified?: boolean; // NUEVO: Estado de verificación
+  role?: 'user' | 'admin' | 'leader';
+  isVerified?: boolean;
   location?: { lat: number; lng: number };
   stats?: {
     chaptersRead: number;
@@ -89,7 +87,6 @@ export interface ChurchLocation {
   address: string;
 }
 
-// NUEVO: Interfaces para el Muro de Clamor
 export interface PrayerRequest {
   id: string;
   user_id: string;
@@ -100,15 +97,15 @@ export interface PrayerRequest {
   is_anonymous: boolean;
   prayed_count: number;
   created_at: string;
-  has_prayed?: boolean; // Estado local para saber si yo ya oré
-  testimony?: string; // NUEVO: Si existe, es que ya fue respondida
+  has_prayed?: boolean;
+  testimony?: string;
 }
 
 export interface Achievement {
-  id: string; // Ej: genesis-1-experto
+  id: string;
   title: string;
   description: string;
-  icon: string; // Emoji
+  icon: string;
   dateUnlocked: string;
   type: 'expert' | 'troll' | 'honor';
 }

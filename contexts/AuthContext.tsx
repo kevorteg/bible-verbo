@@ -1,21 +1,14 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User } from '../types';
 import * as AuthService from '../services/authService';
-import * as UserService from '../services/userService'; 
+import * as UserService from '../services/userService';
 import { supabase } from '../services/supabaseClient';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
-  loginWithMagicCode: (email: string) => Promise<void>;
   register: (name: string, email: string, pass: string) => Promise<void>;
-  verifyOtp: (email: string, token: string) => Promise<void>;
-  resendCode: (email: string) => Promise<void>;
-  sendPasswordResetOtp: (email: string) => Promise<void>;
-  verifyRecoveryOtp: (email: string, token: string) => Promise<void>;
-  updatePassword: (newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   updateStats: (newStats: Partial<User['stats']>) => void;
   updateProfile: (updates: { name?: string; avatar?: string }) => Promise<void>;
@@ -30,127 +23,88 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   useEffect(() => {
     const initSession = async () => {
-        try {
-            const sessionUser = await AuthService.getSession();
-            setUser(sessionUser);
-        } catch (e) {
-            console.error("Error restoring session", e);
-        } finally {
-            setIsLoading(false);
-        }
+      try {
+        const sessionUser = await AuthService.getSession();
+        setUser(sessionUser);
+      } catch {
+        // No session
+      } finally {
+        setIsLoading(false);
+      }
     };
     initSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-         if (!user) {
-             try {
-                const fullUser = await AuthService.getSession();
-                setUser(fullUser);
-             } catch (e) { console.error(e); }
-         }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_IN') {
+        try {
+          const fullUser = await AuthService.getSession();
+          setUser(fullUser);
+        } catch {}
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [user]); 
+  }, []);
 
-  const login = async (email: string, pass: string) => {
-    const user = await AuthService.login(email, pass);
-    setUser(user);
-  };
+  const login = useCallback(async (email: string, pass: string) => {
+    const loggedInUser = await AuthService.login(email, pass);
+    setUser(loggedInUser);
+  }, []);
 
-  const loginWithMagicCode = async (email: string) => {
-      await AuthService.loginWithMagicCode(email);
-  };
+  const register = useCallback(async (name: string, email: string, pass: string) => {
+    const newUser = await AuthService.register(name, email, pass);
+    setUser(newUser);
+  }, []);
 
-  const register = async (name: string, email: string, pass: string) => {
-    const user = await AuthService.register(name, email, pass);
-    setUser(user);
-  };
-
-  const verifyOtp = async (email: string, token: string) => {
-    const user = await AuthService.verifyEmailOtp(email, token);
-    setUser(user);
-  };
-
-  const resendCode = async (email: string) => {
-      await AuthService.resendSignUpCode(email);
-  };
-
-  const sendPasswordResetOtp = async (email: string) => {
-      await AuthService.sendPasswordResetOtp(email);
-  };
-
-  const verifyRecoveryOtp = async (email: string, token: string) => {
-      await AuthService.verifyRecoveryOtp(email, token);
-  };
-
-  const updatePassword = async (newPassword: string) => {
-      await AuthService.updatePassword(newPassword);
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await AuthService.logout();
     setUser(null);
-  };
+  }, []);
 
-  const updateProfile = async (updates: { name?: string; avatar?: string }) => {
-      if (!user) return;
-      const updatedUser = { ...user, ...updates };
+  const updateProfile = useCallback(async (updates: { name?: string; avatar?: string }) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    try {
+      await UserService.updateUserProfile(user.id, updates);
+    } catch {}
+  }, [user]);
+
+  const updateStats = useCallback(async (newStats: Partial<User['stats']>) => {
+    if (user) {
+      const updatedUser = { ...user, stats: { ...user.stats, ...newStats } as any };
       setUser(updatedUser);
       try {
-          await UserService.updateUserProfile(user.id, updates);
-          if (updates.name) {
-              await supabase.auth.updateUser({
-                  data: { full_name: updates.name }
-              });
-          }
-      } catch (e) {
-          console.error("Error saving profile updates:", e);
-      }
-  };
+        await AuthService.updateUserStats(user, newStats);
+      } catch {}
+    }
+  }, [user]);
 
-  const updateStats = async (newStats: Partial<User['stats']>) => {
-      if (user) {
-          const updatedUser = { ...user, stats: { ...user.stats, ...newStats } as any };
-          setUser(updatedUser);
-          try {
-            await AuthService.updateUserStats(user, newStats);
-          } catch (e) { console.error(e); }
-      }
-  };
+  const checkInDaily = useCallback(async () => {
+    if (!user?.stats) return;
 
-  const checkInDaily = async () => {
-      if (!user || !user.stats) return;
+    const today = new Date().toISOString().split('T')[0];
+    const lastDate = user.stats.lastActivityDate || '';
 
-      const today = new Date().toISOString().split('T')[0];
-      const lastDate = user.stats.lastActivityDate || '';
-      
-      if (lastDate === today) return;
+    if (lastDate === today) return;
 
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-      let newStreak = user.stats.streakDays || 0;
+    let newStreak = user.stats.streakDays || 0;
+    newStreak = lastDate === yesterdayStr ? newStreak + 1 : 1;
 
-      if (lastDate === yesterdayStr) {
-          newStreak += 1;
-      } else {
-          newStreak = 1;
-      }
-
-      await updateStats({ 
-          streakDays: newStreak,
-          lastActivityDate: today
-      });
-  };
+    await updateStats({
+      streakDays: newStreak,
+      lastActivityDate: today,
+    });
+  }, [user, updateStats]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithMagicCode, register, verifyOtp, resendCode, sendPasswordResetOtp, verifyRecoveryOtp, updatePassword, logout, updateStats, updateProfile, checkInDaily }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateStats, updateProfile, checkInDaily }}>
       {children}
     </AuthContext.Provider>
   );
