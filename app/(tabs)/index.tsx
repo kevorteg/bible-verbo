@@ -2,13 +2,17 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Href } from 'expo-router';
-import { BookOpen, BrainCircuit, Flame, Star, MapPin, Heart, CheckCircle2, Lock, Zap, Trophy, Cross, Gift, TrendingUp, Sun, Target, Users, Flag } from 'lucide-react-native';
+import { BookOpen, BrainCircuit, Flame, MapPin, Zap, Trophy, Cross, Gift, Sun, Target, Users, Flag } from 'lucide-react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGamification } from '../../hooks/useGamification';
 import { useCharacter } from '../../contexts/CharacterContext';
 import { StreakIndicator } from '../../components/StreakIndicator';
+import { GamificationHeader } from '../../components/GamificationHeader';
+import { LearningPath } from '../../components/LearningPath';
+import { CharacterCoach } from '../../components/CharacterCoach';
+import { DuoButton } from '../../components/DuoButton';
 import { Toast } from '../../components/Toast';
 import { fetchDailyDevotional, DailyDevotional } from '../../services/dailyDevotional';
 import { getRecentScores, TriviaScore } from '../../services/triviaService';
@@ -22,7 +26,7 @@ const featureCards: { icon: any; label: string; route: Href }[] = [
 
 const journeyMilestones = [1, 10, 25, 50, 100, 150, 200, 300, 500, 750, 1000];
 
-const green = '#2E7D32';
+const green = '#58CC02';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -98,6 +102,36 @@ export default function HomeScreen() {
           )}
         </View>
 
+        <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+          <View style={{
+            backgroundColor: colors.surfaceLowest,
+            borderRadius: 20,
+            borderWidth: 2,
+            borderColor: colors.surfaceHigh,
+            paddingVertical: 10,
+            paddingHorizontal: 16,
+          }}>
+            <GamificationHeader
+              streakDays={data.streakDays}
+              coins={data.coins}
+              lives={5}
+              onPressStreak={() => router.push('/(tabs)/profile')}
+              onPressCoins={() => router.push('/store' as any)}
+              onPressLives={() => router.push('/(tabs)/profile')}
+            />
+          </View>
+        </View>
+
+        <View style={{ paddingHorizontal: 24, marginBottom: 20 }}>
+          <CharacterCoach
+            character={activeCharacter}
+            message={`Hola ${user?.name || 'amigo'}! Estas en el nivel ${level}. Sigamos leyendo hoy.`}
+            reaction="happy"
+            size="lg"
+            onPressCharacter={() => triggerCelebration()}
+          />
+        </View>
+
         <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
           <View style={{
             backgroundColor: colors.surfaceLowest,
@@ -157,25 +191,14 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <Pressable
+            <DuoButton
+              label="LEER LA BIBLIA"
+              variant="primary"
+              size="md"
+              fullWidth
               onPress={() => router.push('/(tabs)/biblia')}
-              style={{
-                backgroundColor: colors.primary,
-                borderRadius: 12,
-                paddingVertical: 14,
-                alignItems: 'center',
-                marginTop: 16,
-                shadowColor: colors.primaryShadow,
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 1,
-                shadowRadius: 0,
-                elevation: 6,
-              }}
-            >
-              <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onPrimary }}>
-                Leer la Biblia
-              </Text>
-            </Pressable>
+              style={{ marginTop: 16 }}
+            />
           </View>
         </View>
 
@@ -445,60 +468,22 @@ export default function HomeScreen() {
         )}
 
         <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
-          <Text style={{ fontSize: 14, fontFamily: 'SpaceGrotesk', color: colors.onSurfaceVariant, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Mapa de Progreso
+          <Text style={{ fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurfaceVariant, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+            Tu camino de lectura
           </Text>
           <View style={{
             backgroundColor: colors.surfaceLowest,
-            borderRadius: 16,
-            padding: 20,
-            shadowColor: 'rgba(0,0,0,0.08)',
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 1,
-            shadowRadius: 0,
-            elevation: 8,
+            borderRadius: 20,
+            borderWidth: 2,
+            borderColor: colors.surfaceHigh,
+            paddingVertical: 24,
+            paddingHorizontal: 12,
           }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 0, alignItems: 'center' }}>
-              {journeyMilestones.map((milestone, i) => {
-                const isLast = i === journeyMilestones.length - 1;
-                const isCompleted = data.chaptersRead >= milestone;
-                const isCurrent = !isCompleted && (i === 0 || data.chaptersRead >= journeyMilestones[i - 1]);
-                const nodeSize = isCurrent ? 56 : 44;
-                return (
-                  <View key={milestone} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={{ alignItems: 'center' }}>
-                      <View
-                        style={{
-                          width: nodeSize,
-                          height: nodeSize,
-                          borderRadius: nodeSize / 2,
-                          backgroundColor: isCompleted ? green : isCurrent ? colors.tertiary : colors.surfaceHigh,
-                          alignItems: 'center', justifyContent: 'center',
-                          shadowColor: isCurrent ? colors.tertiaryShadow : 'rgba(0,0,0,0.1)',
-                          shadowOffset: { width: 0, height: isCurrent ? 6 : 4 },
-                          shadowOpacity: 1, shadowRadius: 0,
-                          elevation: isCurrent ? 8 : 4,
-                          borderWidth: isCurrent ? 3 : 0,
-                          borderColor: isCurrent ? colors.tertiary : 'transparent',
-                        }}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 size={nodeSize * 0.5} color="#FFFFFF" />
-                        ) : isCurrent ? (
-                          <Star size={nodeSize * 0.45} color={colors.onTertiary} fill={colors.onTertiary} />
-                        ) : (
-                          <Lock size={nodeSize * 0.4} color={colors.onSurfaceVariant} />
-                        )}
-                      </View>
-                      <Text style={{ fontSize: 8, fontFamily: 'SpaceGrotesk', color: colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' }}>{milestone} cap.</Text>
-                    </View>
-                    {!isLast && (
-                      <View style={{ width: 24, height: 3, backgroundColor: isCompleted ? green : colors.surfaceHigh, borderRadius: 2 }} />
-                    )}
-                  </View>
-                );
-              })}
-            </ScrollView>
+            <LearningPath
+              milestones={journeyMilestones}
+              progress={data.chaptersRead}
+              onPressNode={() => router.push('/(tabs)/biblia')}
+            />
           </View>
         </View>
 

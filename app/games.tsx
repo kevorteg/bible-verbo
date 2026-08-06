@@ -2,11 +2,14 @@ import { useState, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ArrowLeft, BrainCircuit, Star, RefreshCw, Plus, BookOpen } from 'lucide-react-native';
+import { ArrowLeft, BrainCircuit, Star, RefreshCw, Plus, BookOpen, Check, X } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { QuizQuestion } from '../types';
 import { generateQuiz } from '../services/geminiService';
 import { saveTriviaScore } from '../services/triviaService';
+import { DuoButton } from '../components/DuoButton';
+import { CharacterCoach } from '../components/CharacterCoach';
+import { getGuide } from '../services/characterData';
 
 const SEED_QUIZZES: { title: string; questions: QuizQuestion[] }[] = [
   {
@@ -188,88 +191,159 @@ export default function GamesScreen() {
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         {!quiz ? (
           <View>
-            <View style={{ alignItems: 'center', marginBottom: 32 }}>
-              <BrainCircuit size={80} color={colors.primary} />
-              <Text style={{ fontSize: 24, fontFamily: 'BricolageGrotesque', color: colors.onSurface, marginTop: 16 }}>Trivia Biblica</Text>
-              <Text style={{ fontSize: 14, fontFamily: 'PlusJakartaSans', color: colors.onSurfaceVariant, textAlign: 'center', marginTop: 4 }}>Pon a prueba tu conocimiento</Text>
-              <Pressable
-                onPress={() => startQuiz()}
-                disabled={loading}
-                style={{ marginTop: 20, backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 36, shadowColor: colors.primaryShadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 0, elevation: 8 }}
-              >
-                {loading ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onPrimary }}>Generar Trivia IA</Text>}
-              </Pressable>
+            <View style={{ marginBottom: 24 }}>
+              <CharacterCoach
+                character={getGuide()}
+                message="Listo para un reto? Elige una trivia o deja que la IA cree una para ti."
+                reaction="encourage"
+                size="lg"
+              />
             </View>
 
-            <Text style={{ fontSize: 14, fontFamily: 'SpaceGrotesk', color: colors.onSurfaceVariant, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Trivias Disponibles</Text>
+            <DuoButton
+              label={loading ? 'GENERANDO...' : 'GENERAR TRIVIA IA'}
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={loading}
+              onPress={() => startQuiz()}
+              icon={loading ? <ActivityIndicator color="#FFFFFF" /> : <BrainCircuit size={22} color="#FFFFFF" />}
+              style={{ marginBottom: 28 }}
+            />
+
+            <Text style={{ fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurfaceVariant, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Trivias Disponibles</Text>
             {SEED_QUIZZES.map((s, i) => (
               <Pressable
                 key={i}
                 onPress={() => startQuiz(s)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 16, backgroundColor: colors.surfaceLowest, borderRadius: 16, padding: 16, marginBottom: 8, shadowColor: 'rgba(0,0,0,0.06)', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 14,
+                  backgroundColor: colors.surfaceLowest,
+                  borderRadius: 18,
+                  borderWidth: 2,
+                  borderColor: colors.surfaceHigh,
+                  borderBottomWidth: pressed ? 2 : 4,
+                  padding: 14,
+                  marginBottom: 12,
+                  transform: [{ translateY: pressed ? 2 : 0 }],
+                })}
               >
-                <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center' }}>
-                  <BookOpen size={22} color={colors.primary} />
+                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center' }}>
+                  <BookOpen size={24} color={colors.primary} />
                 </View>
-                <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurface }}>{s.title}</Text>
-                <Text style={{ fontSize: 12, fontFamily: 'SpaceGrotesk', color: colors.onSurfaceVariant }}>{s.questions.length} preguntas</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurface }}>{s.title}</Text>
+                  <Text style={{ fontSize: 12, fontFamily: 'PlusJakartaSans', color: colors.onSurfaceVariant, marginTop: 2 }}>{s.questions.length} preguntas</Text>
+                </View>
               </Pressable>
             ))}
 
-            <Pressable
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12, padding: 16, borderRadius: 16, borderWidth: 2, borderColor: colors.primary, borderStyle: 'dashed' }}
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8, padding: 16, borderRadius: 18, borderWidth: 2, borderColor: colors.surfaceHigh, borderStyle: 'dashed' }}
             >
-              <Plus size={20} color={colors.primary} />
-              <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: colors.primary }}>Crear Trivia</Text>
-            </Pressable>
+              <Plus size={20} color={colors.onSurfaceVariant} />
+              <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurfaceVariant }}>Crear Trivia</Text>
+            </View>
           </View>
         ) : gameOver ? (
-          <View style={{ alignItems: 'center', paddingTop: 40 }}>
-            <Star size={80} color={colors.primary} />
-            <Text style={{ fontSize: 24, fontFamily: 'BricolageGrotesque', color: colors.onSurface, marginTop: 16 }}>Juego Terminado!</Text>
+          <View style={{ alignItems: 'center', paddingTop: 24 }}>
+            <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: colors.tertiaryContainer, alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+              <Star size={64} color={colors.tertiary} fill={colors.tertiary} />
+            </View>
+            <Text style={{ fontSize: 26, fontFamily: 'BricolageGrotesque', color: colors.onSurface }}>Leccion completa!</Text>
             <Text style={{ fontSize: 14, fontFamily: 'PlusJakartaSans', color: colors.onSurfaceVariant, marginTop: 4 }}>{quizTitle}</Text>
-            <Text style={{ fontSize: 48, fontFamily: 'BricolageGrotesque', color: colors.primary, marginTop: 12 }}>{score}/{quiz.length}</Text>
-            <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans', color: colors.onSurfaceVariant }}>preguntas correctas</Text>
-            <Pressable
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+              <View style={{ backgroundColor: colors.primaryContainer, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center', minWidth: 120 }}>
+                <Text style={{ fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onPrimaryContainer, textTransform: 'uppercase', letterSpacing: 1 }}>Aciertos</Text>
+                <Text style={{ fontSize: 36, fontFamily: 'BricolageGrotesque', color: colors.primary, marginTop: 4 }}>{score}/{quiz.length}</Text>
+              </View>
+              <View style={{ backgroundColor: colors.tertiaryContainer, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center', minWidth: 120 }}>
+                <Text style={{ fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onTertiaryContainer, textTransform: 'uppercase', letterSpacing: 1 }}>Precision</Text>
+                <Text style={{ fontSize: 36, fontFamily: 'BricolageGrotesque', color: colors.tertiary, marginTop: 4 }}>{Math.round((score / quiz.length) * 100)}%</Text>
+              </View>
+            </View>
+
+            <DuoButton
+              label="CONTINUAR"
+              variant="primary"
+              size="lg"
+              fullWidth
               onPress={() => { setQuiz(null); setGameOver(false); }}
-              style={{ marginTop: 32, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 40, shadowColor: colors.primaryShadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 0, elevation: 8 }}
-            >
-              <RefreshCw size={20} color={colors.onPrimary} />
-              <Text style={{ fontSize: 18, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onPrimary }}>Volver</Text>
-            </Pressable>
+              icon={<RefreshCw size={20} color="#FFFFFF" />}
+              style={{ marginTop: 36 }}
+            />
           </View>
         ) : (
           <View>
-            <Text style={{ fontSize: 12, fontFamily: 'SpaceGrotesk', color: colors.onSurfaceVariant, marginBottom: 4 }}>{quizTitle}</Text>
-            <Text style={{ fontSize: 14, fontFamily: 'SpaceGrotesk', color: colors.onSurfaceVariant, marginBottom: 8 }}>Pregunta {currentQ + 1} de {quiz.length}</Text>
-            <View style={{ height: 8, backgroundColor: colors.surfaceHigh, borderRadius: 4, marginBottom: 24, overflow: 'hidden' }}>
-              <View style={{ width: `${((currentQ + 1) / quiz.length) * 100}%`, height: '100%', backgroundColor: colors.primary, borderRadius: 4 }} />
+            <Text style={{ fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurfaceVariant, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{quizTitle} - {currentQ + 1}/{quiz.length}</Text>
+            <View style={{ height: 14, backgroundColor: colors.surfaceHigh, borderRadius: 7, marginBottom: 24, overflow: 'hidden' }}>
+              <View style={{ width: `${((currentQ + 1) / quiz.length) * 100}%`, height: '100%', backgroundColor: colors.primary, borderRadius: 7 }} />
             </View>
 
-            <View style={{ backgroundColor: colors.surfaceLowest, borderRadius: 16, padding: 24, marginBottom: 24, shadowColor: 'rgba(0,0,0,0.08)', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 0, elevation: 8 }}>
-              <Text style={{ fontSize: 20, fontFamily: 'BricolageGrotesque', color: colors.onSurface, marginBottom: 20 }}>{quiz[currentQ].question}</Text>
+            <View style={{ backgroundColor: colors.surfaceLowest, borderRadius: 20, borderWidth: 2, borderColor: colors.surfaceHigh, padding: 22, marginBottom: 24 }}>
+              <Text style={{ fontSize: 22, fontFamily: 'BricolageGrotesque', color: colors.onSurface, marginBottom: 22, lineHeight: 28 }}>{quiz[currentQ].question}</Text>
               {quiz[currentQ].options.map((opt, idx) => {
                 const isCorrect = idx === quiz[currentQ].correctIndex;
                 const isSelected = selected === idx;
-                let bg = colors.surfaceLow;
-                if (selected !== null) {
-                  bg = isCorrect ? colors.primary + '25' : isSelected ? colors.tertiary + '25' : colors.surfaceLow;
+                const answered = selected !== null;
+
+                let face = colors.surfaceLowest;
+                let edge = colors.surfaceHigh;
+                let textColor = colors.onSurface;
+                if (answered && isCorrect) {
+                  face = colors.primaryContainer; edge = colors.primary; textColor = colors.onPrimaryContainer;
+                } else if (answered && isSelected) {
+                  face = '#FFE0E0'; edge = '#FF4B4B'; textColor = '#D33';
                 }
+
                 return (
                   <Pressable
                     key={idx}
                     onPress={() => handleAnswer(idx)}
-                    style={{ backgroundColor: bg, borderRadius: 12, padding: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                    disabled={answered}
+                    style={({ pressed }) => ({
+                      backgroundColor: edge,
+                      borderRadius: 16,
+                      paddingBottom: pressed && !answered ? 0 : 4,
+                      marginBottom: 12,
+                    })}
                   >
-                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: selected !== null && isCorrect ? '#2E7D32' : isSelected ? colors.tertiary : colors.surfaceHigh, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: selected !== null && isCorrect ? '#FFFFFF' : isSelected ? '#FFFFFF' : colors.onSurfaceVariant }}>{String.fromCharCode(65 + idx)}</Text>
-                    </View>
-                    <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans', color: colors.onSurface, flex: 1 }}>{opt}</Text>
+                    {({ pressed }) => (
+                      <View
+                        style={{
+                          backgroundColor: face,
+                          borderRadius: 16,
+                          borderWidth: 2,
+                          borderColor: edge,
+                          padding: 14,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 12,
+                          transform: [{ translateY: pressed && !answered ? 4 : 0 }],
+                        }}
+                      >
+                        <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: edge, alignItems: 'center', justifyContent: 'center' }}>
+                          {answered && isCorrect ? (
+                            <Check size={18} color="#FFFFFF" strokeWidth={3} />
+                          ) : answered && isSelected ? (
+                            <X size={18} color="#FFFFFF" strokeWidth={3} />
+                          ) : (
+                            <Text style={{ fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: answered ? '#FFFFFF' : colors.onSurfaceVariant }}>{String.fromCharCode(65 + idx)}</Text>
+                          )}
+                        </View>
+                        <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: textColor, flex: 1 }}>{opt}</Text>
+                      </View>
+                    )}
                   </Pressable>
                 );
               })}
               {selected !== null && (
-                <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans', color: colors.onSurfaceVariant, marginTop: 8, fontStyle: 'italic' }}>{quiz[currentQ].explanation}</Text>
+                <View style={{ backgroundColor: colors.surfaceLow, borderRadius: 12, padding: 12, marginTop: 8 }}>
+                  <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans', color: colors.onSurfaceVariant, lineHeight: 19 }}>{quiz[currentQ].explanation}</Text>
+                </View>
               )}
             </View>
           </View>

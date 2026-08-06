@@ -1,4 +1,4 @@
-import { Image, View } from 'react-native';
+import { Image, Pressable } from 'react-native';
 import Animated, { useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, FadeIn, FadeOut } from 'react-native-reanimated';
 import { Character, CharacterReaction, CharacterSize } from '../services/characterData';
 
@@ -51,11 +51,13 @@ export default function CharacterSprite({ character, size = 'md', reaction = 'id
       exiting={FadeOut.duration(200)}
       style={[animStyle, { width: dim, height: dim }]}
     >
-      <Image
-        source={character.asset}
-        style={{ width: dim, height: dim, borderRadius: dim / 2 }}
-        resizeMode="cover"
-      />
+      <Pressable onPress={onPress} disabled={!onPress} style={{ width: dim, height: dim }}>
+        <Image
+          source={character.asset}
+          style={{ width: dim, height: dim, borderRadius: dim / 2 }}
+          resizeMode="cover"
+        />
+      </Pressable>
     </Animated.View>
   );
 }

@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert, BackHandler, Modal, TouchableOpacity, AppState, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen, CheckCircle2, Lightbulb, Headphones, Bookmark, Star, Zap, Settings, BrainCircuit } from 'lucide-react-native';
+import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle2, Lightbulb, Headphones, Bookmark, Zap, Settings, BrainCircuit } from 'lucide-react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useTheme } from '../contexts/ThemeContext';
 import { useBibleReader, setPendingNavigation } from '../hooks/useBibleReader';
@@ -16,8 +16,11 @@ import { getActiveGoals, contributeToGoal, addContribution } from '../services/c
 import { logGroupReading } from '../services/groupService';
 import { contributeToActiveChallenges } from '../services/challengeService';
 import { useAuth } from '../contexts/AuthContext';
+import { DuoButton } from '../components/DuoButton';
+import { CharacterCoach } from '../components/CharacterCoach';
+import { getGuide } from '../services/characterData';
 
-const green = '#2E7D32';
+const green = '#58CC02';
 
 const tips = [
   'Recuerda orar antes de leer, pide a Dios que te hable a traves de Su Palabra',
@@ -348,7 +351,7 @@ export default function ReaderScreen() {
         origin={{ x: 200, y: -20 }}
         autoStart={false}
         fadeOut
-        colors={['#449BD1', '#2E7D32', '#F58634', '#FFFFFF']}
+        colors={['#58CC02', '#1CB0F6', '#FF9600', '#FFC800']}
       />
 
       <Toast
@@ -377,20 +380,20 @@ export default function ReaderScreen() {
           </Pressable>
           <Pressable
             onPress={() => currentBook && currentChapter && router.push({ pathname: '/audio-bible', params: { book: currentBook.id, chapter: currentChapter.id } })}
-            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primaryShadow, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}
+            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.secondary, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: colors.secondaryShadow }}
           >
-            <Headphones size={22} color={colors.onPrimary} />
+            <Headphones size={22} color={colors.onSecondary} />
           </Pressable>
         </View>
       </View>
 
-      <View style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: colors.surfaceLowest, borderRadius: 12, padding: 12, shadowColor: 'rgba(0,0,0,0.06)', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <Text style={{ fontSize: 10, fontFamily: 'SpaceGrotesk', color: colors.onSurfaceVariant, letterSpacing: 1, textTransform: 'uppercase' }}>Progreso del libro</Text>
-          <Text style={{ fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', color: colors.primary }}>{readCount}/{chaptersList.length} capitulos</Text>
+      <View style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: colors.surfaceLowest, borderRadius: 16, borderWidth: 2, borderColor: colors.surfaceHigh, padding: 14 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <Text style={{ fontSize: 11, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurfaceVariant, letterSpacing: 1, textTransform: 'uppercase' }}>Progreso del libro</Text>
+          <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', color: colors.secondary }}>{readCount}/{chaptersList.length} capitulos</Text>
         </View>
-        <View style={{ height: 8, backgroundColor: colors.surfaceHigh, borderRadius: 4, overflow: 'hidden' }}>
-          <View style={{ width: `${chaptersList.length > 0 ? (readCount / chaptersList.length) * 100 : 0}%`, height: '100%', backgroundColor: colors.primary, borderRadius: 4 }} />
+        <View style={{ height: 12, backgroundColor: colors.surfaceHigh, borderRadius: 6, overflow: 'hidden' }}>
+          <View style={{ width: `${chaptersList.length > 0 ? (readCount / chaptersList.length) * 100 : 0}%`, height: '100%', backgroundColor: colors.secondary, borderRadius: 6 }} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
           <Zap size={14} color={colors.tertiary} />
@@ -411,13 +414,13 @@ export default function ReaderScreen() {
           onScroll={handleScroll}
           scrollEventThrottle={100}
         >
-          <View style={{ marginBottom: 20, backgroundColor: colors.primaryContainer, borderRadius: 16, padding: 16, shadowColor: colors.primaryShadow, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 0, elevation: 6 }}>
+          <View style={{ marginBottom: 20, backgroundColor: colors.secondaryContainer, borderRadius: 16, borderWidth: 2, borderColor: colors.secondary, padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <Lightbulb size={20} color={colors.primary} />
-              <Text style={{ fontSize: 14, fontFamily: 'SpaceGrotesk', color: colors.primary, letterSpacing: 1, textTransform: 'uppercase' }}>Consejo</Text>
+              <Lightbulb size={20} color={colors.secondary} />
+              <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSecondaryContainer, letterSpacing: 1, textTransform: 'uppercase' }}>Consejo</Text>
             </View>
             <Animated.View style={{ opacity: tipAnim }}>
-              <Text style={{ fontSize: 15, fontFamily: 'PlusJakartaSans', color: colors.onPrimaryContainer, lineHeight: 22 }}>
+              <Text style={{ fontSize: 15, fontFamily: 'PlusJakartaSans', color: colors.onSecondaryContainer, lineHeight: 22 }}>
                 {tips[currentTipIndex]}
               </Text>
             </Animated.View>
@@ -445,8 +448,8 @@ export default function ReaderScreen() {
                   <Pressable onPress={() => handleToggleFav(verse)} style={{ marginTop: 2 }}>
                     <Bookmark size={16} color={favs.has(`${currentBook?.id}-${currentChapter?.number}-${verse.number}`) ? colors.tertiary : colors.onSurfaceVariant} fill={favs.has(`${currentBook?.id}-${currentChapter?.number}-${verse.number}`) ? colors.tertiary : 'transparent'} />
                   </Pressable>
-                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 12, fontFamily: 'SpaceGrotesk', color: colors.primary }}>{verse.number}</Text>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.secondaryContainer, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 12, fontFamily: 'PlusJakartaSans_700Bold', color: colors.secondary }}>{verse.number}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: readerSettings.fontSize, fontFamily: readerSettings.font, color: BG_COLORS[readerSettings.bg].text, lineHeight: readerSettings.fontSize * readerSettings.lineHeight }}>
@@ -458,31 +461,25 @@ export default function ReaderScreen() {
             ))
           )}
 
-          <Pressable
+          <DuoButton
+            label={isRead ? 'COMPLETADO' : 'MARCAR COMO LEIDO'}
+            variant="primary"
+            size="lg"
+            fullWidth
             onPress={handleMarkRead}
-            style={{
-              backgroundColor: isRead ? green : colors.primary,
-              borderRadius: 16, padding: 16, alignItems: 'center',
-              flexDirection: 'row', justifyContent: 'center', gap: 8,
-              shadowColor: isRead ? 'rgba(46,125,50,0.4)' : colors.primaryShadow,
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 1, shadowRadius: 0, elevation: 8,
-            }}
-          >
-            <CheckCircle2 size={22} color={isRead ? '#FFFFFF' : colors.onPrimary} />
-            <Text style={{ fontSize: 16, fontFamily: 'PlusJakartaSans_700Bold', color: isRead ? '#FFFFFF' : colors.onPrimary }}>
-              {isRead ? 'Completado' : 'Marcar como leido'}
-            </Text>
-          </Pressable>
+            icon={<CheckCircle2 size={22} color="#FFFFFF" />}
+            faceColor={isRead ? colors.primaryShadow : undefined}
+            edgeColor={isRead ? '#3C8000' : undefined}
+          />
         </ScrollView>
       )}
 
       <View style={{ position: 'absolute', bottom: 32, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Pressable onPress={handlePrevChapter} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceLowest, alignItems: 'center', justifyContent: 'center', shadowColor: 'rgba(0,0,0,0.08)', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 0, elevation: 8 }}>
-          <ChevronLeft size={24} color={colors.onSurface} />
+        <Pressable onPress={handlePrevChapter} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceLowest, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surfaceHigh, borderBottomWidth: 5 }}>
+          <ChevronLeft size={24} color={colors.secondary} />
         </Pressable>
-        <Pressable onPress={handleNextChapter} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceLowest, alignItems: 'center', justifyContent: 'center', shadowColor: 'rgba(0,0,0,0.08)', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 0, elevation: 8 }}>
-          <ChevronRight size={24} color={colors.onSurface} />
+        <Pressable onPress={handleNextChapter} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceLowest, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surfaceHigh, borderBottomWidth: 5 }}>
+          <ChevronRight size={24} color={colors.secondary} />
         </Pressable>
       </View>
 
@@ -507,23 +504,34 @@ export default function ReaderScreen() {
               </>
             ) : (
               <>
-                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 12 }}>
-                  <BrainCircuit size={28} color={colors.primary} />
+                <View style={{ marginBottom: 20 }}>
+                  <CharacterCoach
+                    character={getGuide()}
+                    message={compQuestion?.q || ''}
+                    reaction="thinking"
+                    size="md"
+                  />
                 </View>
-                <Text style={{ fontSize: 18, fontFamily: 'BricolageGrotesque', color: colors.onSurface, textAlign: 'center', marginBottom: 16 }}>
-                  {compQuestion?.q}
-                </Text>
                 {compQuestion?.opts.map((opt, i) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={i}
                     onPress={() => handleComprehensionAnswer(i)}
-                    style={{ backgroundColor: colors.surfaceLow, borderRadius: 14, padding: 14, marginBottom: 8, alignItems: 'center' }}
+                    style={({ pressed }) => ({
+                      backgroundColor: colors.secondary,
+                      borderRadius: 16,
+                      paddingBottom: pressed ? 0 : 4,
+                      marginBottom: 12,
+                    })}
                   >
-                    <Text style={{ fontSize: 15, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurface }}>{opt}</Text>
-                  </TouchableOpacity>
+                    {({ pressed }) => (
+                      <View style={{ backgroundColor: colors.secondaryContainer, borderRadius: 16, borderWidth: 2, borderColor: colors.secondary, padding: 14, alignItems: 'center', transform: [{ translateY: pressed ? 4 : 0 }] }}>
+                        <Text style={{ fontSize: 15, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSecondaryContainer }}>{opt}</Text>
+                      </View>
+                    )}
+                  </Pressable>
                 ))}
                 <TouchableOpacity onPress={handleSkipComprehension} style={{ marginTop: 8, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans', color: colors.onSurfaceVariant }}>Saltar verificación</Text>
+                  <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_700Bold', color: colors.onSurfaceVariant }}>Saltar verificación</Text>
                 </TouchableOpacity>
               </>
             )}
